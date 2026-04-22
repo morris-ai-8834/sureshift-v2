@@ -1,103 +1,89 @@
+/**
+ * Footer.tsx
+ *
+ * Clean, minimal footer — matches the light design language.
+ * Dark background section to end the page with weight.
+ */
+
 import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-950 border-t border-gray-800/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-[#0A0A0F] border-t border-white/05">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+
+        {/* Top row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-14">
+
           {/* Brand */}
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 bg-[#2952CC] rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-sm">SS</span>
-              </div>
-              <span className="font-bold text-white text-lg tracking-tight">
-                SureShift<span className="text-[#2952CC]"> Rentals</span>
+            <div className="mb-4">
+              <span className="text-xl font-black text-white tracking-tight">
+                Sure<span className="text-[#2952CC]">Shift</span>
               </span>
-            </Link>
-            <p className="text-[#7A8B9A] text-sm leading-relaxed max-w-sm">
-              Reliable cars for the hustle. Houston's trusted weekly rental partner for gig workers,
-              commuters, and anyone who needs to keep moving.
+              <span className="ml-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30">
+                Rentals
+              </span>
+            </div>
+            <p className="text-white/40 text-sm leading-relaxed max-w-xs">
+              Reliable weekly rentals for Houston's gig workers and commuters. No credit check. Drive tomorrow.
             </p>
-            <div className="mt-4 flex flex-col gap-1.5">
-              <a
-                href="tel:8000000000"
-                className="text-sm text-[#7A8B9A] hover:text-white transition-colors flex items-center gap-2"
-              >
-                <span>📞</span> (800) 000-0000
-              </a>
-              <a
-                href="mailto:hello@sureshiftrentals.com"
-                className="text-sm text-[#7A8B9A] hover:text-white transition-colors flex items-center gap-2"
-              >
-                <span>✉️</span> hello@sureshiftrentals.com
-              </a>
-              <span className="text-sm text-[#7A8B9A] flex items-center gap-2">
-                <span>📍</span> Houston, TX
-              </span>
+            <div className="mt-6 flex items-center gap-2 text-white/40 text-sm">
+              <span>📍</span>
+              <span>Houston, TX</span>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Company links */}
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              Quick Links
-            </h4>
-            <div className="flex flex-col gap-2">
+            <h4 className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-4">Company</h4>
+            <ul className="flex flex-col gap-3">
               {[
-                { label: "Browse Fleet", href: "/fleet" },
-                { label: "Book a Car", href: "/book" },
+                { label: "Fleet", href: "/fleet" },
                 { label: "How It Works", href: "/#how-it-works" },
-                { label: "About Us", href: "/about" },
-                { label: "Customer Portal", href: "/portal" },
+                { label: "About", href: "/about" },
+                { label: "FAQ", href: "/faq" },
               ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm text-[#7A8B9A] hover:text-white transition-colors"
-                >
-                  {link.label}
-                </Link>
+                <li key={link.href}>
+                  <Link href={link.href} className="text-white/40 hover:text-white/80 text-sm transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
-          {/* Support */}
+          {/* Contact */}
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-4">
-              Support
-            </h4>
-            <div className="flex flex-col gap-2">
-              {[
-                { label: "FAQ", href: "/faq" },
-                { label: "Contact Us", href: "/contact" },
-                { label: "Rental Requirements", href: "/faq#requirements" },
-                { label: "Payment Info", href: "/faq#payment" },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm text-[#7A8B9A] hover:text-white transition-colors"
-                >
-                  {link.label}
+            <h4 className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-4">Contact</h4>
+            <ul className="flex flex-col gap-3">
+              <li>
+                <a href="tel:+18000000000" className="text-white/40 hover:text-white/80 text-sm transition-colors">
+                  (800) 000-0000
+                </a>
+              </li>
+              <li>
+                <a href="mailto:hello@sureshiftrentals.com" className="text-white/40 hover:text-white/80 text-sm transition-colors">
+                  hello@sureshiftrentals.com
+                </a>
+              </li>
+              <li className="pt-2">
+                <Link href="/fleet" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2952CC] text-white text-xs font-semibold rounded-lg hover:bg-[#1e3fa8] transition-colors">
+                  Browse Fleet →
                 </Link>
-              ))}
-            </div>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-gray-800/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} SureShift Rentals. All rights reserved. Houston, TX.
+        {/* Bottom row */}
+        <div className="pt-8 border-t border-white/05 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-white/25 text-xs">
+            © 2026 SureShift Rentals. All rights reserved.
           </p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
-              Terms of Service
-            </Link>
-          </div>
+          <p className="text-white/25 text-xs">
+            Houston, TX · Reliable Cars for the Hustle.
+          </p>
         </div>
       </div>
     </footer>
