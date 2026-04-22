@@ -1,301 +1,203 @@
 /**
  * app/fleet/[id]/page.tsx
  *
- * Vehicle detail page at /fleet/[slug].
- *
- * Fetches the vehicle by slug from the database via /api/vehicles/[slug].
- * Shows full specs, pricing, requirements, and a reservation CTA.
- *
- * This is a server component — data is fetched at request time.
- * Uses Next.js notFound() for 404 handling.
+ * Vehicle detail / profile page at /fleet/[slug].
+ * Server-side rendered directly from database — no API fetch needed.
  */
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import type { VehicleRow } from "@/lib/types";
-import { VehicleStatus } from "@/lib/constants";
-import { formatDollars } from "@/lib/helpers";
+import { getDB } from "@/lib/db";
 
 // ============================================
-// DATA FETCHING
-// Fetches a vehicle by slug from the API.
-// Returns null if not found or if the request fails.
+// GENERATE STATIC PARAMS
+// Pre-renders all vehicle slugs at build time
 // ============================================
-
-async function getVehicleBySlug(slug: string): Promise<VehicleRow | null> {
+export async function generateStaticParams() {
   try {
-    // Use absolute URL for server-side fetch in Next.js
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/vehicles/${slug}`, {
-      // Revalidate every 60 seconds — fleet data changes infrequently
-      next: { revalidate: 60 },
-    });
-
-    if (res.status === 404) return null;
-    if (!res.ok) return null;
-
-    return await res.json();
+    const sql = getDB();
+    const rows = await sql`SELECT slug FROM vehicles WHERE is_bookable = TRUE`;
+    return rows.map((r: Record<string, unknown>) => ({ id: String(r.slug) }));
   } catch {
-    return null;
+    return [];
   }
 }
 
 // ============================================
-// HELPER: Status display data
+// PAGE
 // ============================================
+export default async function VehicleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-function getStatusDisplay(status: string): { label: string; color: string } {
-  switch (status) {
-    case VehicleStatus.AVAILABLE:
-      return { label: "Available Now", color: "text-emerald-400" };
-    case VehicleStatus.LIMITED_AVAILABILITY:
-      return { label: "Limited Availability", color: "text-amber-400" };
-    case VehicleStatus.RESERVED:
-      return { label: "Currently Reserved", color: "text-red-400" };
-    default:
-      return { label: status, color: "text-gray-400" };
+  // Fetch vehicle from DB by slug
+  let vehicle: Record<string, unknown> | null = null;
+  try {
+    const sql = getDB();
+    const rows = await sql`
+      SELECT * FROM vehicles WHERE slug = ${id} AND is_bookable = TRUE LIMIT 1
+    `;
+    vehicle = rows[0] as Record<string, unknown> ?? null;
+  } catch (err) {
+    console.error("[VehicleDetail] DB error:", err);
   }
-}
 
-// ============================================
-// HELPER: Vehicle gradient by make
-// ============================================
+  if (!vehicle) notFound();
 
-function getGradient(make: string): string {
+  const weekly = vehicle.weekly_rate
+    ? Number(vehicle.weekly_rate)
+    : Math.round(Number(vehicle.daily_rate) * 7);
+  const deposit = Number(vehicle.deposit_amount);
+  const isBookable = vehicle.status === "available" || vehicle.status === "limited_availability";
+
+  const statusLabel =
+    vehicle.status === "available" ? "Available Now" :
+    vehicle.status === "limited_availability" ? "Limited Availability" :
+    "Reserved";
+
+  const statusColor =
+    vehicle.status === "available" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+    vehicle.status === "limited_availability" ? "bg-amber-50 text-amber-700 border-amber-200" :
+    "bg-gray-100 text-gray-500 border-gray-200";
+
   const gradients: Record<string, string> = {
     Toyota: "from-slate-700 to-slate-900",
-    Nissan: "from-gray-700 to-gray-900",
-    Ford: "from-blue-900 to-blue-950",
+    Nissan: "from-blue-800 to-slate-900",
+    Ford: "from-blue-900 to-slate-900",
+    default: "from-gray-700 to-gray-900",
   };
-  return gradients[make] ?? "from-neutral-700 to-neutral-900";
-}
-
-// ============================================
-// PAGE COMPONENT
-// ============================================
-
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function VehicleDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const vehicle = await getVehicleBySlug(id);
-
-  // 404 if vehicle not found or API failed
-  if (!vehicle) {
-    notFound();
-  }
-
-  const statusDisplay = getStatusDisplay(vehicle.status);
-  const isBookable =
-    vehicle.is_bookable &&
-    (vehicle.status === VehicleStatus.AVAILABLE ||
-      vehicle.status === VehicleStatus.LIMITED_AVAILABILITY);
-  const gradient = getGradient(vehicle.make);
-  const dailyRate = parseFloat(vehicle.daily_rate);
-  const weeklyRate = vehicle.weekly_rate ? parseFloat(vehicle.weekly_rate) : null;
-  const deposit = parseFloat(vehicle.deposit_amount);
+  const gradient = gradients[String(vehicle.make)] ?? gradients.default;
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D]">
+    <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <nav className="flex items-center gap-2 text-sm text-[#7A8B9A] py-4">
-          <Link href="/" className="hover:text-white transition-colors">Home</Link>
-          <span>/</span>
-          <Link href="/fleet" className="hover:text-white transition-colors">Fleet</Link>
-          <span>/</span>
-          <span className="text-white">{vehicle.headline_name}</span>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-28 pb-24">
+
+        {/* Breadcrumb */}
+        <nav className="text-sm text-gray-400 mb-8">
+          <Link href="/" className="hover:text-gray-600">Home</Link>
+          <span className="mx-2">/</span>
+          <Link href="/fleet" className="hover:text-gray-600">Fleet</Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-900">{String(vehicle.year)} {String(vehicle.make)} {String(vehicle.model)}</span>
         </nav>
-      </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
-          {/* ===== LEFT: Image + Details ===== */}
-          <div className="lg:col-span-3 flex flex-col gap-6">
+          {/* LEFT — Image + specs */}
+          <div>
+            {/* Main image */}
+            <div className={`aspect-[4/3] rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-6 overflow-hidden`}>
+              <svg className="w-48 h-32 text-white opacity-20" viewBox="0 0 200 120" fill="none">
+                <path d="M20 75 L40 45 Q52 32 68 30 L132 30 Q148 32 160 45 L180 75 L186 92 L14 92 Z" fill="currentColor"/>
+                <circle cx="55" cy="92" r="18" fill="none" stroke="white" strokeWidth="4"/>
+                <circle cx="145" cy="92" r="18" fill="none" stroke="white" strokeWidth="4"/>
+                <path d="M68 50 L85 36 L115 36 L132 50 Z" fill="white" fillOpacity="0.3"/>
+              </svg>
+            </div>
 
-            {/* Vehicle image */}
-            <div className={`relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br ${gradient} rounded-2xl overflow-hidden flex items-center justify-center border border-gray-800`}>
-              {vehicle.image_cover_url ? (
-                <img
-                  src={vehicle.image_cover_url}
-                  alt={vehicle.headline_name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <svg viewBox="0 0 200 80" className="w-64 h-32 text-white/20" fill="currentColor">
-                  <path d="M170 50H30c-5 0-10-3-10-8V38c0-5 3-8 8-8h8l20-20c3-3 7-5 12-5h64c5 0 9 2 12 5l20 20h6c5 0 8 3 8 8v4c0 5-3 8-8 8zM68 10H52l-16 16h32V10zm52 0H80v16h56V10h-16zm32 16h-16l16-16v16z" />
-                  <circle cx="55" cy="54" r="12" /><circle cx="145" cy="54" r="12" />
-                  <circle cx="55" cy="54" r="7" fill="#0D0D0D" /><circle cx="145" cy="54" r="7" fill="#0D0D0D" />
-                </svg>
-              )}
-              <div className="absolute top-4 right-4">
-                <span className={`px-3 py-1 rounded-full bg-black/50 border border-white/10 text-sm font-semibold ${statusDisplay.color}`}>
-                  {statusDisplay.label}
-                </span>
+            {/* Specs grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Seats", value: `${String(vehicle.seats)} passengers` },
+                { label: "Transmission", value: String(vehicle.transmission) },
+                { label: "Fuel Type", value: String(vehicle.fuel_type) },
+                { label: "City MPG", value: vehicle.mpg_city ? `${String(vehicle.mpg_city)} mpg` : "N/A" },
+                { label: "Highway MPG", value: vehicle.mpg_highway ? `${String(vehicle.mpg_highway)} mpg` : "N/A" },
+                { label: "Location", value: String(vehicle.location_city) },
+              ].map((spec) => (
+                <div key={spec.label} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">{spec.label}</div>
+                  <div className="text-sm font-semibold text-gray-900">{spec.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {Boolean(vehicle.work_ready) && <span className="px-3 py-1.5 bg-[#2952CC]/08 text-[#2952CC] text-xs font-semibold rounded-lg border border-[#2952CC]/15">Gig Work Ready</span>}
+              {Boolean(vehicle.commuter_friendly) && <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs font-semibold rounded-lg border border-gray-100">Commuter Friendly</span>}
+              {Boolean(vehicle.fuel_efficient) && <span className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs font-semibold rounded-lg border border-gray-100">Fuel Efficient</span>}
+            </div>
+          </div>
+
+          {/* RIGHT — Info + booking */}
+          <div className="lg:sticky lg:top-28">
+
+            {/* Status */}
+            <div className="mb-4">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${statusColor}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                {statusLabel}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-3">
+              {String(vehicle.year)} {String(vehicle.make)} {String(vehicle.model)}
+              {Boolean(vehicle.trim) && <span className="text-gray-400 font-light ml-2 text-2xl">{String(vehicle.trim)}</span>}
+            </h1>
+
+            <p className="text-gray-500 leading-relaxed mb-8">
+              {String(vehicle.description_short)}
+            </p>
+
+            {/* Pricing card */}
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-6">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-4xl font-black text-gray-900">${weekly}</span>
+                <span className="text-gray-400 text-sm">/week</span>
               </div>
-              {vehicle.vehicle_code && (
-                <div className="absolute bottom-4 left-4 text-white/40 text-xs font-mono">
-                  {vehicle.vehicle_code}
+              <p className="text-gray-400 text-sm mb-4">${deposit} refundable deposit required</p>
+
+              {isBookable ? (
+                <Link
+                  href={`/book?vehicle=${String(vehicle.slug)}`}
+                  className="block w-full text-center px-6 py-4 bg-[#2952CC] text-white font-bold rounded-xl hover:bg-[#1e3fa8] transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-[#2952CC]/25"
+                >
+                  Reserve This Car
+                </Link>
+              ) : (
+                <div className="w-full text-center px-6 py-4 bg-gray-100 text-gray-400 font-bold rounded-xl">
+                  Currently Reserved
                 </div>
               )}
-            </div>
-
-            {/* Title + description */}
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white">{vehicle.headline_name}</h1>
-              <p className="text-[#7A8B9A] mt-3 text-lg leading-relaxed">{vehicle.description_short}</p>
-              {vehicle.description_long && (
-                <p className="text-[#7A8B9A]/80 mt-3 text-base leading-relaxed">{vehicle.description_long}</p>
-              )}
-            </div>
-
-            {/* Feature tags */}
-            {(vehicle.work_ready || vehicle.fuel_efficient || vehicle.commuter_friendly) && (
-              <div className="flex flex-wrap gap-2">
-                {vehicle.work_ready && (
-                  <span className="px-3 py-1.5 rounded-full bg-[#2952CC]/15 text-[#2952CC] border border-[#2952CC]/20 text-sm font-medium">
-                    🔧 Gig Work Ready
-                  </span>
-                )}
-                {vehicle.fuel_efficient && (
-                  <span className="px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-sm font-medium">
-                    ⛽ Fuel Efficient
-                  </span>
-                )}
-                {vehicle.commuter_friendly && (
-                  <span className="px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 text-sm font-medium">
-                    🏙️ Commuter Friendly
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Specs table */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-white font-bold text-lg mb-4">Vehicle Specs</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                {[
-                  { label: "Transmission", value: vehicle.transmission },
-                  { label: "Fuel Type", value: vehicle.fuel_type },
-                  { label: "Seats", value: `${vehicle.seats} passengers` },
-                  { label: "MPG City", value: vehicle.mpg_city ? `${vehicle.mpg_city} MPG` : "N/A" },
-                  { label: "MPG Highway", value: vehicle.mpg_highway ? `${vehicle.mpg_highway} MPG` : "N/A" },
-                  { label: "Vehicle Type", value: vehicle.vehicle_type },
-                  { label: "Location", value: vehicle.location_city },
-                  { label: "Mileage Policy", value: "Unlimited miles" },
-                  { label: "Insurance", value: "Liability included" },
-                ].map((spec) => (
-                  <div key={spec.label} className="flex flex-col gap-1">
-                    <span className="text-xs text-[#7A8B9A] uppercase tracking-wider">{spec.label}</span>
-                    <span className="text-white text-sm font-medium">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Requirements */}
-            {vehicle.requirements_note && (
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                <h2 className="text-white font-bold text-lg mb-3">Rental Requirements</h2>
-                <p className="text-[#7A8B9A] text-sm leading-relaxed">{vehicle.requirements_note}</p>
-              </div>
-            )}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6">
+              <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">Requirements</h3>
+              <ul className="space-y-2">
+                {[
+                  "Valid driver's license",
+                  "Refundable deposit",
+                  "Signed rental agreement",
+                  "Liability coverage included",
+                ].map((req) => (
+                  <li key={req} className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="w-4 h-4 rounded-full bg-[#2952CC]/10 text-[#2952CC] flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span>
+                    {req}
+                  </li>
+                ))}
+              </ul>
 
-            {/* Pickup note */}
-            {vehicle.pickup_note && (
-              <div className="bg-[#2952CC]/10 border border-[#2952CC]/20 rounded-xl p-4">
-                <p className="text-[#2952CC] font-semibold text-sm mb-1">📍 Pickup Information</p>
-                <p className="text-[#7A8B9A] text-sm">{vehicle.pickup_note}</p>
-              </div>
-            )}
-          </div>
+              {Boolean(vehicle.requirements_note) && (
+                <p className="mt-4 text-xs text-gray-400 leading-relaxed">{String(vehicle.requirements_note)}</p>
+              )}
+            </div>
 
-          {/* ===== RIGHT: Pricing box ===== */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-24">
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">
-
-                {/* Price display */}
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-black text-white">{formatDollars(vehicle.daily_rate)}</span>
-                  <span className="text-[#7A8B9A]">/ day</span>
-                </div>
-                {weeklyRate && (
-                  <p className="text-sm text-emerald-400 mb-4">
-                    {formatDollars(weeklyRate)}/week — save {formatDollars(dailyRate * 7 - weeklyRate)}
-                  </p>
-                )}
-
-                {/* Status badge */}
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 border border-white/10 text-sm font-semibold mb-6 ${statusDisplay.color}`}>
-                  <span className={`w-2 h-2 rounded-full ${vehicle.status === VehicleStatus.AVAILABLE ? "bg-emerald-400" : vehicle.status === VehicleStatus.LIMITED_AVAILABILITY ? "bg-amber-400" : "bg-red-400"}`} />
-                  {statusDisplay.label}
-                </div>
-
-                {/* Pricing breakdown */}
-                <div className="flex flex-col gap-0 mb-6 text-sm divide-y divide-gray-800">
-                  <div className="flex justify-between py-3">
-                    <span className="text-[#7A8B9A]">Daily rate</span>
-                    <span className="text-white font-semibold">{formatDollars(vehicle.daily_rate)}</span>
-                  </div>
-                  {weeklyRate && (
-                    <div className="flex justify-between py-3">
-                      <span className="text-[#7A8B9A]">Weekly rate</span>
-                      <span className="text-white font-semibold">{formatDollars(weeklyRate)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-3">
-                    <span className="text-[#7A8B9A]">Refundable deposit</span>
-                    <span className="text-white font-semibold">{formatDollars(deposit)}</span>
-                  </div>
-                  <div className="flex justify-between py-3">
-                    <span className="text-[#7A8B9A]">Mileage</span>
-                    <span className="text-emerald-400 font-semibold">Unlimited</span>
-                  </div>
-                  <div className="flex justify-between py-3">
-                    <span className="text-[#7A8B9A]">Insurance</span>
-                    <span className="text-emerald-400 font-semibold">Included</span>
-                  </div>
-                </div>
-
-                {/* CTA buttons */}
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href={isBookable ? `/book?vehicle=${vehicle.id}` : "#"}
-                    className={`w-full text-center py-4 rounded-xl font-bold text-lg transition-all ${
-                      isBookable
-                        ? "bg-[#2952CC] text-white hover:bg-[#3561e0] hover:shadow-lg hover:shadow-[#2952CC]/30"
-                        : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    {isBookable ? "Reserve This Car" : "Currently Unavailable"}
-                  </Link>
-                  <a
-                    href="tel:8000000000"
-                    className="w-full text-center py-3.5 rounded-xl border border-gray-700 font-semibold text-[#7A8B9A] hover:border-gray-500 hover:text-white transition-all"
-                  >
-                    📞 Call to Book
-                  </a>
-                </div>
-              </div>
-
-              {/* Tip box */}
-              <div className="bg-[#2952CC]/10 border border-[#2952CC]/20 rounded-xl p-4 text-sm text-[#7A8B9A]">
-                <p className="font-semibold text-[#2952CC] mb-1">💡 Quick Tip</p>
-                <p>
-                  Have your license and rideshare app ready. Most rentals are confirmed within a few hours.
-                  Call{" "}
-                  <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a>{" "}
-                  for faster service.
-                </p>
-              </div>
+            {/* How it works mini */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-400">
+                Questions? Call us at{" "}
+                <a href="tel:+18000000000" className="text-[#2952CC] font-semibold">(800) 000-0000</a>
+              </p>
             </div>
           </div>
         </div>
