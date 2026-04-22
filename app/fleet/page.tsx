@@ -15,47 +15,35 @@
  */
 
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { getDB } from "@/lib/db";
 
 // ============================================
-// CAR SILHOUETTE SVG — centered floating look
+// CAR IMAGE MAP — slug to photo file
 // ============================================
-function CarSilhouette({ color }: { color: string }) {
+const carImages: Record<string, string> = {
+  "toyota": "/cars/toyota-camry.png",
+  "nissan": "/cars/nissan-altima.png",
+  "ford": "/cars/ford-fusion.png",
+};
+
+// ============================================
+// CUSTOM ICON COMPONENTS — unique to SureShift
+// ============================================
+function GigIcon() {
   return (
-    <svg viewBox="0 0 320 160" className="w-full" fill="none">
-      {/* Shadow under car */}
-      <ellipse cx="160" cy="148" rx="110" ry="8" fill={color} opacity="0.08"/>
-      {/* Car body */}
-      <path
-        d="M48 110 L72 68 Q88 50 110 46 L210 46 Q232 50 248 68 L272 110 L280 128 L40 128 Z"
-        fill={color}
-        opacity="0.85"
-      />
-      {/* Roof */}
-      <path
-        d="M108 70 L130 50 L190 50 L212 70 Z"
-        fill={color}
-        opacity="0.95"
-      />
-      {/* Windows */}
-      <path d="M118 68 L132 53 L158 53 L158 68 Z" fill="white" opacity="0.25"/>
-      <path d="M162 68 L162 53 L188 53 L202 68 Z" fill="white" opacity="0.25"/>
-      {/* Window divider */}
-      <line x1="159" y1="53" x2="159" y2="68" stroke="white" strokeWidth="1.5" opacity="0.3"/>
-      {/* Wheels */}
-      <circle cx="96" cy="128" r="22" fill="#1a1a2e"/>
-      <circle cx="96" cy="128" r="14" fill="#2a2a3e"/>
-      <circle cx="96" cy="128" r="6" fill="#8892b0"/>
-      <circle cx="224" cy="128" r="22" fill="#1a1a2e"/>
-      <circle cx="224" cy="128" r="14" fill="#2a2a3e"/>
-      <circle cx="224" cy="128" r="6" fill="#8892b0"/>
-      {/* Headlights */}
-      <ellipse cx="264" cy="102" rx="7" ry="4" fill="white" opacity="0.6"/>
-      <ellipse cx="56" cy="102" rx="7" ry="4" fill="#ff9500" opacity="0.4"/>
-      {/* Grille */}
-      <path d="M256 108 L272 108 L272 116 L256 116 Z" fill="#0a0a14" opacity="0.4"/>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  );
+}
+function LeafIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 8C8 10 5.9 16.17 3.82 19.5c1.12.5 2.5.5 3.68 0C9.28 15.4 12 13 17 13V8z"/>
+      <path d="M17 8h4v5c-1.5 0-3-.5-4-1"/>
     </svg>
   );
 }
@@ -66,14 +54,8 @@ function CarSilhouette({ color }: { color: string }) {
 function VehicleCard({ v }: { v: Record<string, unknown> }) {
   const weekly = v.weekly_rate ? Number(v.weekly_rate) : Math.round(Number(v.daily_rate) * 7);
   const isBookable = v.status === "available" || v.status === "limited_availability";
-
-  const carColors: Record<string, string> = {
-    Toyota: "#1e3a5f",
-    Nissan: "#1a1a4e",
-    Ford: "#0a2463",
-    default: "#2d3561",
-  };
-  const carColor = carColors[String(v.make)] ?? carColors.default;
+  const make = String(v.make).toLowerCase();
+  const imgSrc = carImages[make] ?? carImages["toyota"];
 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100">
@@ -109,23 +91,29 @@ function VehicleCard({ v }: { v: Record<string, unknown> }) {
           <p className="text-center text-xs text-gray-400 mb-1">{String(v.trim)}</p>
         )}
 
-        {/* Tags — centered small pills */}
+        {/* Tags — centered small pills with custom icons */}
         <div className="flex justify-center gap-1.5 px-6 mb-4 flex-wrap">
           {Boolean(v.work_ready) && (
-            <span className="text-[10px] text-[#2952CC] font-semibold px-2 py-0.5 rounded-full border border-[#2952CC]/20 bg-[#2952CC]/05">
-              Gig Ready
+            <span className="inline-flex items-center gap-1 text-[10px] text-[#2952CC] font-semibold px-2 py-0.5 rounded-full border border-[#2952CC]/20 bg-[#2952CC]/05">
+              <GigIcon /> Gig Ready
             </span>
           )}
           {Boolean(v.fuel_efficient) && (
-            <span className="text-[10px] text-gray-500 font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">
-              Fuel Efficient
+            <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">
+              <LeafIcon /> Fuel Efficient
             </span>
           )}
         </div>
 
-        {/* Car image — centered, floating */}
-        <div className="px-6 pb-4">
-          <CarSilhouette color={carColor} />
+        {/* Real car photo */}
+        <div className="px-4 pb-2 flex items-center justify-center h-44 relative">
+          <Image
+            src={imgSrc}
+            alt={`${String(v.year)} ${String(v.make)} ${String(v.model)}`}
+            width={360}
+            height={200}
+            className="object-contain w-full h-full drop-shadow-md"
+          />
         </div>
 
         {/* Price */}
