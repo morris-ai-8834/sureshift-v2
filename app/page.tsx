@@ -83,19 +83,15 @@ export default function HomePage() {
           ============================================ */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0A0A0F]">
 
-        {/* Subtle blue glow top right */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#2952CC]/10 rounded-full blur-[120px] pointer-events-none" />
-        {/* Subtle blue glow bottom left */}
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#2952CC]/06 rounded-full blur-[100px] pointer-events-none" />
-
-        {/* Fine grid overlay */}
+        {/* Real hero photo */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
-          }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-bg.png')" }}
         />
+        {/* Dark overlay so text is readable */}
+        <div className="absolute inset-0 bg-[#0A0A0F]/70" />
+        {/* Blue accent overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0F]/80 via-transparent to-transparent" />
 
         {/* Hero content */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-24">
