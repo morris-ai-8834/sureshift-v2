@@ -1,111 +1,151 @@
 /**
  * app/fleet/page.tsx
  *
- * Fleet listing page — server-side rendered for reliability.
- * Fetches vehicles directly from DB on the server, no client-side fetch needed.
+ * Fleet listing page — Porsche Drive card aesthetic.
+ *
+ * Design:
+ * - Light gray page background
+ * - Sticky "Select rental period" card at top
+ * - White elevated vehicle cards, single column on mobile / 2-col on tablet / 3-col desktop
+ * - Car name bold centered at top of card
+ * - Large car image centered (floating silhouette on white)
+ * - Price simple below image
+ * - "Select model" underlined text link
+ * - Minimal — no chips, no clutter
  */
 
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import Link from "next/link";
 import { getDB } from "@/lib/db";
 
 // ============================================
-// STATUS BADGE
+// CAR SILHOUETTE SVG — centered floating look
 // ============================================
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; classes: string; dot: string }> = {
-    available: { label: "Available Now", classes: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-    limited_availability: { label: "Limited", classes: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-400" },
-    reserved: { label: "Reserved", classes: "bg-gray-100 text-gray-400 border-gray-200", dot: "bg-gray-300" },
-  };
-  const s = config[status] ?? config["available"];
+function CarSilhouette({ color }: { color: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${s.classes}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
+    <svg viewBox="0 0 320 160" className="w-full" fill="none">
+      {/* Shadow under car */}
+      <ellipse cx="160" cy="148" rx="110" ry="8" fill={color} opacity="0.08"/>
+      {/* Car body */}
+      <path
+        d="M48 110 L72 68 Q88 50 110 46 L210 46 Q232 50 248 68 L272 110 L280 128 L40 128 Z"
+        fill={color}
+        opacity="0.85"
+      />
+      {/* Roof */}
+      <path
+        d="M108 70 L130 50 L190 50 L212 70 Z"
+        fill={color}
+        opacity="0.95"
+      />
+      {/* Windows */}
+      <path d="M118 68 L132 53 L158 53 L158 68 Z" fill="white" opacity="0.25"/>
+      <path d="M162 68 L162 53 L188 53 L202 68 Z" fill="white" opacity="0.25"/>
+      {/* Window divider */}
+      <line x1="159" y1="53" x2="159" y2="68" stroke="white" strokeWidth="1.5" opacity="0.3"/>
+      {/* Wheels */}
+      <circle cx="96" cy="128" r="22" fill="#1a1a2e"/>
+      <circle cx="96" cy="128" r="14" fill="#2a2a3e"/>
+      <circle cx="96" cy="128" r="6" fill="#8892b0"/>
+      <circle cx="224" cy="128" r="22" fill="#1a1a2e"/>
+      <circle cx="224" cy="128" r="14" fill="#2a2a3e"/>
+      <circle cx="224" cy="128" r="6" fill="#8892b0"/>
+      {/* Headlights */}
+      <ellipse cx="264" cy="102" rx="7" ry="4" fill="white" opacity="0.6"/>
+      <ellipse cx="56" cy="102" rx="7" ry="4" fill="#ff9500" opacity="0.4"/>
+      {/* Grille */}
+      <path d="M256 108 L272 108 L272 116 L256 116 Z" fill="#0a0a14" opacity="0.4"/>
+    </svg>
   );
 }
 
 // ============================================
-// VEHICLE CARD
+// VEHICLE CARD — Porsche Drive style
 // ============================================
 function VehicleCard({ v }: { v: Record<string, unknown> }) {
-  const isBookable = v.status === "available" || v.status === "limited_availability";
   const weekly = v.weekly_rate ? Number(v.weekly_rate) : Math.round(Number(v.daily_rate) * 7);
-  const deposit = Number(v.deposit_amount);
+  const isBookable = v.status === "available" || v.status === "limited_availability";
 
-  const gradients: Record<string, string> = {
-    Toyota: "from-slate-700 to-slate-900",
-    Nissan: "from-blue-800 to-slate-900",
-    Ford: "from-blue-900 to-slate-900",
-    default: "from-gray-700 to-gray-900",
+  const carColors: Record<string, string> = {
+    Toyota: "#1e3a5f",
+    Nissan: "#1a1a4e",
+    Ford: "#0a2463",
+    default: "#2d3561",
   };
-  const gradient = gradients[String(v.make)] ?? gradients.default;
+  const carColor = carColors[String(v.make)] ?? carColors.default;
 
   return (
-    <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:border-gray-200 transition-all duration-300">
+    <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100">
+      {/* Available tag — subtle, top right */}
+      {v.status === "available" && (
+        <div className="flex justify-end px-5 pt-5">
+          <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full">
+            Available
+          </span>
+        </div>
+      )}
+      {v.status === "limited_availability" && (
+        <div className="flex justify-end px-5 pt-5">
+          <span className="text-xs text-amber-600 font-semibold bg-amber-50 px-2.5 py-1 rounded-full">
+            Limited
+          </span>
+        </div>
+      )}
+      {v.status === "reserved" && (
+        <div className="flex justify-end px-5 pt-5">
+          <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-2.5 py-1 rounded-full">
+            Reserved
+          </span>
+        </div>
+      )}
 
-      {/* Image area */}
-      <div className={`relative aspect-[16/10] bg-gradient-to-br ${gradient} overflow-hidden`}>
-        <div className="absolute inset-0 flex items-center justify-center opacity-20">
-          <svg className="w-36 h-24 text-white" viewBox="0 0 200 120" fill="none">
-            <path d="M20 75 L40 45 Q52 32 68 30 L132 30 Q148 32 160 45 L180 75 L186 92 L14 92 Z" fill="currentColor"/>
-            <circle cx="55" cy="92" r="18" fill="none" stroke="white" strokeWidth="4"/>
-            <circle cx="145" cy="92" r="18" fill="none" stroke="white" strokeWidth="4"/>
-            <path d="M68 50 L85 36 L115 36 L132 50 Z" fill="white" fillOpacity="0.3"/>
-          </svg>
-        </div>
-        <div className="absolute top-3 left-3">
-          <StatusBadge status={String(v.status)} />
-        </div>
-        {Boolean(v.work_ready) && (
-          <div className="absolute top-3 right-3">
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/20 backdrop-blur-sm">
+      <div className={v.status ? "pt-2" : "pt-6"}>
+        {/* Car name — centered, bold */}
+        <h3 className="text-center text-base font-black text-gray-900 px-6 mb-1">
+          {String(v.year)} {String(v.make)} {String(v.model)}
+        </h3>
+        {Boolean(v.trim) && (
+          <p className="text-center text-xs text-gray-400 mb-1">{String(v.trim)}</p>
+        )}
+
+        {/* Tags — centered small pills */}
+        <div className="flex justify-center gap-1.5 px-6 mb-4 flex-wrap">
+          {Boolean(v.work_ready) && (
+            <span className="text-[10px] text-[#2952CC] font-semibold px-2 py-0.5 rounded-full border border-[#2952CC]/20 bg-[#2952CC]/05">
               Gig Ready
             </span>
-          </div>
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="p-5">
-        <h3 className="font-bold text-gray-900 text-base mb-1 group-hover:text-[#2952CC] transition-colors">
-          {String(v.year)} {String(v.make)} {String(v.model)} {v.trim ? String(v.trim) : ""}
-        </h3>
-        <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
-          <span>{String(v.seats)} seats</span>
-          <span className="w-1 h-1 rounded-full bg-gray-200" />
-          <span className="capitalize">{String(v.transmission)}</span>
-          {Boolean(v.mpg_city) && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-gray-200" />
-              <span>{String(v.mpg_city)} mpg city</span>
-            </>
+          )}
+          {Boolean(v.fuel_efficient) && (
+            <span className="text-[10px] text-gray-500 font-semibold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50">
+              Fuel Efficient
+            </span>
           )}
         </div>
-        <p className="text-xs text-gray-500 mb-4 leading-relaxed line-clamp-2">{String(v.description_short)}</p>
 
-        <div className="flex items-end justify-between pt-3 border-t border-gray-50">
-          <div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-gray-900">${weekly}</span>
-              <span className="text-xs text-gray-400">/week</span>
-            </div>
-            <div className="text-xs text-gray-400">${deposit} deposit</div>
-          </div>
+        {/* Car image — centered, floating */}
+        <div className="px-6 pb-4">
+          <CarSilhouette color={carColor} />
+        </div>
+
+        {/* Price */}
+        <div className="text-center pb-2">
+          <span className="text-lg font-bold text-gray-900">${weekly}</span>
+          <span className="text-sm text-gray-400"> / week</span>
+        </div>
+        <p className="text-center text-xs text-gray-400 pb-5">${Number(v.deposit_amount)} deposit</p>
+
+        {/* CTA — Porsche Drive style underlined link */}
+        <div className="border-t border-gray-100 py-4 px-6 text-center">
           {isBookable ? (
             <Link
               href={`/fleet/${String(v.slug)}`}
-              className="px-5 py-2.5 bg-[#2952CC] text-white text-xs font-bold rounded-xl hover:bg-[#1e3fa8] transition-all duration-200 shadow-sm hover:shadow-lg hover:shadow-[#2952CC]/20"
+              className="text-sm font-semibold text-gray-900 underline underline-offset-4 decoration-gray-900 hover:text-[#2952CC] hover:decoration-[#2952CC] transition-colors"
             >
-              Reserve
+              Select model
             </Link>
           ) : (
-            <span className="px-5 py-2.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl">
-              Reserved
-            </span>
+            <span className="text-sm text-gray-400">Currently reserved</span>
           )}
         </div>
       </div>
@@ -114,7 +154,7 @@ function VehicleCard({ v }: { v: Record<string, unknown> }) {
 }
 
 // ============================================
-// PAGE — Server Component
+// PAGE — server rendered
 // ============================================
 export default async function FleetPage() {
   let vehicles: Record<string, unknown>[] = [];
@@ -125,7 +165,6 @@ export default async function FleetPage() {
       SELECT *
       FROM vehicles
       WHERE is_bookable = TRUE
-        AND status IN ('available', 'limited_availability', 'reserved')
       ORDER BY daily_rate ASC, vehicle_code ASC
     `;
     vehicles = rows as Record<string, unknown>[];
@@ -134,58 +173,45 @@ export default async function FleetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F0F0F0]">
       <Navbar />
 
-      {/* Header */}
-      <section className="pt-32 pb-12 px-6 lg:px-8 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-[#2952CC] text-sm font-semibold uppercase tracking-widest mb-3">Our Fleet</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-4">
-            Available Vehicles
-          </h1>
-          <p className="text-gray-500 text-base max-w-xl">
-            All vehicles are Uber and Lyft eligible. Weekly rates include liability coverage.
-            Reserve online or call{" "}
-            <a href="tel:+18000000000" className="text-[#2952CC] font-semibold">
-              (800) 000-0000
-            </a>
-            .
-          </p>
+      {/* Page header */}
+      <div className="pt-24 pb-6 px-5 max-w-5xl mx-auto">
+        <h1 className="text-3xl font-black text-gray-900 mb-1">Available Fleet</h1>
+        <p className="text-gray-500 text-sm">
+          Houston, TX · All vehicles are gig-work eligible
+        </p>
+      </div>
+
+      {/* Sticky rental period selector */}
+      <div className="sticky top-16 z-30 px-5 pb-4 max-w-5xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <p className="text-xs text-gray-500 font-medium mb-2">Select your rental period</p>
+          <Link
+            href="/book"
+            className="block w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-400 hover:border-[#2952CC] hover:text-gray-600 transition-colors"
+          >
+            Select your rental period
+          </Link>
         </div>
-      </section>
+      </div>
 
       {/* Fleet grid */}
-      <section className="py-16 px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          {vehicles.length === 0 ? (
-            <div className="text-center py-24">
-              <p className="text-gray-400 text-lg mb-4">No vehicles available right now.</p>
-              <p className="text-gray-400 text-sm">Check back soon or call us at (800) 000-0000</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vehicles.map((v) => (
-                <VehicleCard key={String(v.id)} v={v} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 px-6 lg:px-8 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-2xl font-black text-gray-900 mb-3">Don&apos;t see what you need?</h2>
-          <p className="text-gray-500 text-sm mb-6">Our fleet updates regularly. Call or text us and we&apos;ll find the right fit.</p>
-          <a
-            href="tel:+18000000000"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#2952CC] text-white font-semibold rounded-xl hover:bg-[#1e3fa8] transition-colors text-sm"
-          >
-            Call (800) 000-0000
-          </a>
-        </div>
-      </section>
+      <div className="px-5 pb-16 max-w-5xl mx-auto">
+        {vehicles.length === 0 ? (
+          <div className="text-center py-24 bg-white rounded-2xl">
+            <p className="text-gray-400 text-lg mb-2">No vehicles available right now.</p>
+            <p className="text-gray-400 text-sm">Check back soon or call <a href="tel:+18000000000" className="text-[#2952CC]">(800) 000-0000</a></p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {vehicles.map((v) => (
+              <VehicleCard key={String(v.id)} v={v} />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Footer />
     </div>
