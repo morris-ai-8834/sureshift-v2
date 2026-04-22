@@ -21,7 +21,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import {
   ReservationStatus,
   DepositStatus,
@@ -55,6 +55,7 @@ import type {
 // ============================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const sql = getDB();
   try {
     // ============================================
     // SECTION: Parse request body
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // SECTION: Vehicle validation
     // Confirm the vehicle exists, is bookable, and has an appropriate status.
     // ============================================
-    const vehicles = await typedSql<VehicleRow[]>`
+    const vehicles = await sql`
       SELECT * FROM vehicles
       WHERE id = ${body.vehicleId}
       LIMIT 1
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // A vehicle is unavailable if it has any non-expired blocking entry
     // that overlaps our requested pickup→return window.
     // ============================================
-    const conflicts = await typedSql<{ id: string }[]>`
+    const conflicts = await sql`
       SELECT id FROM vehicle_blackout_dates
       WHERE vehicle_id = ${body.vehicleId}
         AND start_datetime < ${returnDatetime.toISOString()}
@@ -189,7 +190,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Look up customer by email. If found, update their contact info
     // (people move and change phones). If not found, create new record.
     // ============================================
-    const existingCustomers = await typedSql<CustomerRow[]>`
+    const existingCustomers = await sql`
       SELECT * FROM customers
       WHERE email = ${body.email.toLowerCase().trim()}
       LIMIT 1
@@ -217,7 +218,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       `;
     } else {
       // Create new customer record
-      const newCustomers = await typedSql<{ id: string }[]>`
+      const newCustomers = await sql`
         INSERT INTO customers (
           first_name, last_name, full_name,
           email, phone,
@@ -260,7 +261,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const reservationCode = generateReservationCode();
     const holdExpiration = calculateHoldExpiration();
 
-    const newReservations = await typedSql<{ id: string }[]>`
+    const newReservations = await sql`
       INSERT INTO reservations (
         reservation_code,
         vehicle_id,

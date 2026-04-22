@@ -18,7 +18,8 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { sql } = require("./db") as typeof import("./db");
+const { getDB } = require("./db") as typeof import("./db");
+const sql = getDB();
 
 // ============================================
 // FLEET DATA

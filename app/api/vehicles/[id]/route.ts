@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { getErrorMessage } from "@/lib/helpers";
 import type { VehicleRow } from "@/lib/types";
 
@@ -38,6 +38,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
@@ -54,12 +55,12 @@ export async function GET(
 
     // Fetch the vehicle by either id (UUID) or slug
     const vehicles = isUUID
-      ? await typedSql<VehicleRow[]>`
+      ? await sql`
           SELECT * FROM vehicles
           WHERE id = ${id}
           LIMIT 1
         `
-      : await typedSql<VehicleRow[]>`
+      : await sql`
           SELECT * FROM vehicles
           WHERE slug = ${id}
           LIMIT 1

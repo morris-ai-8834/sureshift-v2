@@ -15,15 +15,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { getErrorMessage } from "@/lib/helpers";
-import type { ReservationWithDetails } from "@/lib/types";
+
 
 // ============================================
 // GET /api/admin/reservations
 // ============================================
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { searchParams } = request.nextUrl;
     const statusFilter = searchParams.get("status");
@@ -33,11 +34,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Fetch all reservations with a full JOIN for display context.
     // If a status filter is provided, narrow results to that status.
     // Without a filter, all reservations are returned newest-first.
-    let reservations: ReservationWithDetails[];
+    let reservations: any[];
 
     if (statusFilter) {
       // Status-filtered query — used by tab views in the admin reservations page
-      reservations = await typedSql<ReservationWithDetails[]>`
+      reservations = await sql`
         SELECT
           r.*,
           c.first_name  AS customer_first_name,
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       `;
     } else {
       // No filter — return everything
-      reservations = await typedSql<ReservationWithDetails[]>`
+      reservations = await sql`
         SELECT
           r.*,
           c.first_name  AS customer_first_name,

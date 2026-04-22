@@ -20,7 +20,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import {
   ReservationStatus,
   AgreementStatus,
@@ -42,6 +42,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ reservationId: string }> }
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { reservationId } = await params;
 
@@ -92,7 +93,7 @@ export async function POST(
     // Only reservations with agreement_sent or deposit_paid status can be signed.
     // A confirmed or completed reservation cannot be re-signed.
     // ============================================
-    const reservations = await typedSql<ReservationRow[]>`
+    const reservations = await sql`
       SELECT * FROM reservations
       WHERE id = ${reservationId}
       LIMIT 1
@@ -136,7 +137,7 @@ export async function POST(
     // SECTION: Validate agreement exists
     // An agreement document must exist before it can be signed.
     // ============================================
-    const agreements = await typedSql<AgreementRow[]>`
+    const agreements = await sql`
       SELECT * FROM agreements
       WHERE reservation_id = ${reservationId}
       ORDER BY created_at DESC

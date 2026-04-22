@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { ChangedByType } from "@/lib/constants";
 import { isNonEmptyString, getErrorMessage } from "@/lib/helpers";
 import type {
@@ -33,10 +33,11 @@ export async function GET(
   _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
-    const reservations = await typedSql<ReservationWithDetails[]>`
+    const reservations = await sql`
       SELECT
         r.*,
         c.first_name  AS customer_first_name,
@@ -78,11 +79,12 @@ export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
     // Fetch current reservation to capture old_status for history log
-    const existing = await typedSql<ReservationRow[]>`
+    const existing = await sql`
       SELECT * FROM reservations WHERE id = ${id} LIMIT 1
     `;
 
@@ -148,7 +150,7 @@ export async function PUT(
     }
 
     // Return updated reservation
-    const updated = await typedSql<ReservationRow[]>`
+    const updated = await sql`
       SELECT * FROM reservations WHERE id = ${id} LIMIT 1
     `;
 

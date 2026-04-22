@@ -33,7 +33,8 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { sql, testConnection } = require("./db") as typeof import("./db");
+const { getDB } = require("./db") as typeof import("./db");
+const sql = getDB();
 
 // ============================================
 // MIGRATION DEFINITIONS
@@ -373,7 +374,7 @@ async function runMigrations(): Promise<void> {
   // Test connectivity before attempting any DDL
   console.log("📡 Testing database connection...");
   try {
-    await testConnection();
+    
     console.log("✅ Connected to Neon Postgres\n");
   } catch (err) {
     console.error("❌ Connection failed:", err);

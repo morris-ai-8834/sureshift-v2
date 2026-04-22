@@ -19,7 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { VehicleStatus } from "@/lib/constants";
 import { isValidDateString, isReturnAfterPickup, getErrorMessage } from "@/lib/helpers";
 import type { VehicleRow } from "@/lib/types";
@@ -29,6 +29,7 @@ import type { VehicleRow } from "@/lib/types";
 // ============================================
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { searchParams } = request.nextUrl;
     const pickupParam = searchParams.get("pickup");
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       //
       // Overlap condition: start < returnDate AND end > pickupDate
       // (standard interval overlap check — covers all partial-overlap cases)
-      const availableVehicles = await typedSql<VehicleRow[]>`
+      const availableVehicles = await sql`
         SELECT v.*
         FROM vehicles v
         WHERE v.is_bookable = TRUE
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // BRANCH 2: No dates — return all bookable vehicles
     // Fleet page baseline: show what's in the fleet before date selection.
     // ----------------------------------------
-    const allVehicles = await typedSql<VehicleRow[]>`
+    const allVehicles = await sql`
       SELECT *
       FROM vehicles
       WHERE is_bookable = TRUE

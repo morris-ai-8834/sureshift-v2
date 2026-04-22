@@ -24,17 +24,17 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { getErrorMessage } from "@/lib/helpers";
 import type {
   PortalData,
-  ReservationRow,
-  VehicleRow,
-  CustomerRow,
-  PaymentRow,
-  AgreementRow,
-  SignatureRow,
-  CustomerDocumentRow,
+
+
+
+
+
+
+
   ReservationStatusHistoryRow,
 } from "@/lib/types";
 
@@ -46,6 +46,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { code } = await params;
 
@@ -63,7 +64,7 @@ export async function GET(
     // FETCH: Core reservation record
     // The reservation_code is the customer-facing key for portal lookup.
     // ----------------------------------------
-    const reservations = await typedSql<ReservationRow[]>`
+    const reservations = await sql`
       SELECT * FROM reservations
       WHERE reservation_code = ${normalizedCode}
       LIMIT 1
@@ -86,7 +87,7 @@ export async function GET(
     // FETCH: Vehicle details
     // The vehicle record linked to this reservation.
     // ----------------------------------------
-    const vehicles = await typedSql<VehicleRow[]>`
+    const vehicles = await sql`
       SELECT * FROM vehicles
       WHERE id = ${vehicle_id}
       LIMIT 1
@@ -104,7 +105,7 @@ export async function GET(
     // FETCH: Customer details
     // The customer record linked to this reservation.
     // ----------------------------------------
-    const customers = await typedSql<CustomerRow[]>`
+    const customers = await sql`
       SELECT * FROM customers
       WHERE id = ${customer_id}
       LIMIT 1
@@ -121,7 +122,7 @@ export async function GET(
     // FETCH: Payment history for this reservation
     // All payment transactions (deposits, fees, refunds) ordered newest first.
     // ----------------------------------------
-    const payments = await typedSql<PaymentRow[]>`
+    const payments = await sql`
       SELECT * FROM payments
       WHERE reservation_id = ${reservationId}
       ORDER BY created_at DESC
@@ -131,7 +132,7 @@ export async function GET(
     // FETCH: Agreement document (if exists)
     // One agreement per reservation — null if not yet generated.
     // ----------------------------------------
-    const agreements = await typedSql<AgreementRow[]>`
+    const agreements = await sql`
       SELECT * FROM agreements
       WHERE reservation_id = ${reservationId}
       ORDER BY created_at DESC
@@ -144,9 +145,9 @@ export async function GET(
     // FETCH: Signature record (if agreement was signed)
     // Null if agreement hasn't been signed yet.
     // ----------------------------------------
-    let signature: SignatureRow | null = null;
+    let signature: any = null;
     if (agreement !== null) {
-      const signatures = await typedSql<SignatureRow[]>`
+      const signatures = await sql`
         SELECT * FROM signatures
         WHERE agreement_id = ${agreement.id}
         ORDER BY created_at DESC
@@ -159,7 +160,7 @@ export async function GET(
     // FETCH: Customer documents for this reservation
     // Files uploaded by the customer (license, insurance, etc.)
     // ----------------------------------------
-    const documents = await typedSql<CustomerDocumentRow[]>`
+    const documents = await sql`
       SELECT * FROM customer_documents
       WHERE reservation_id = ${reservationId}
       ORDER BY uploaded_at DESC
@@ -169,7 +170,7 @@ export async function GET(
     // FETCH: Status history audit trail
     // All status changes from newest to oldest — used for portal timeline.
     // ----------------------------------------
-    const statusHistory = await typedSql<ReservationStatusHistoryRow[]>`
+    const statusHistory = await sql`
       SELECT * FROM reservation_status_history
       WHERE reservation_id = ${reservationId}
       ORDER BY created_at ASC

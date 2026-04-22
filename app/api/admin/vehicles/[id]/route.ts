@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { VehicleStatus } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/helpers";
 import type { VehicleRow } from "@/lib/types";
@@ -25,10 +25,11 @@ export async function GET(
   _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
-    const vehicles = await typedSql<VehicleRow[]>`
+    const vehicles = await sql`
       SELECT * FROM vehicles WHERE id = ${id} LIMIT 1
     `;
 
@@ -55,11 +56,12 @@ export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
     // Confirm the vehicle exists before attempting update
-    const existing = await typedSql<VehicleRow[]>`
+    const existing = await sql`
       SELECT id FROM vehicles WHERE id = ${id} LIMIT 1
     `;
 
@@ -98,7 +100,7 @@ export async function PUT(
     `;
 
     // Return the updated vehicle record
-    const updated = await typedSql<VehicleRow[]>`
+    const updated = await sql`
       SELECT * FROM vehicles WHERE id = ${id} LIMIT 1
     `;
 
@@ -121,10 +123,11 @@ export async function DELETE(
   _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
-    const existing = await typedSql<{ id: string }[]>`
+    const existing = await sql`
       SELECT id FROM vehicles WHERE id = ${id} LIMIT 1
     `;
 

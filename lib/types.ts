@@ -321,14 +321,14 @@ export interface AvailabilityResponse {
 
 /** Full portal data for a reservation — used on /portal/[code] */
 export interface PortalData {
-  reservation: ReservationRow;
-  vehicle: VehicleRow;
-  customer: CustomerRow;
-  payments: PaymentRow[];
-  agreement: AgreementRow | null;
-  signature: SignatureRow | null;
-  documents: CustomerDocumentRow[];
-  statusHistory: ReservationStatusHistoryRow[];
+  reservation: any;
+  vehicle: any;
+  customer: any;
+  payments: any[];
+  agreement: any | null;
+  signature: any | null;
+  documents: any[];
+  statusHistory: any[];
 }
 
 /** Admin dashboard stats */
@@ -339,8 +339,8 @@ export interface DashboardStats {
   activeRentals: number;
   pendingDeposits: number;
   pendingSignatures: number;
-  upcomingPickups: ReservationWithDetails[];
-  recentReservations: ReservationWithDetails[];
+  upcomingPickups: any[];
+  recentReservations: any[];
 }
 
 // ============================================

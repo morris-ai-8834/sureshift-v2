@@ -19,7 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { VehicleStatus } from "@/lib/constants";
 import {
   isNonEmptyString,
@@ -35,6 +35,7 @@ import type { CheckAvailabilityBody, AvailabilityResponse, VehicleRow } from "@/
 // ============================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const sql = getDB();
   try {
     // ----------------------------------------
     // SECTION: Parse & validate request body
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // SECTION: Check vehicle exists and is bookable
     // A vehicle can exist in the fleet but be marked not bookable (e.g. maintenance).
     // ----------------------------------------
-    const vehicles = await typedSql<VehicleRow[]>`
+    const vehicles = await sql`
       SELECT id, status, is_bookable FROM vehicles
       WHERE id = ${vehicleId}
       LIMIT 1
@@ -112,11 +113,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Query any blackout dates that overlap the requested window.
     // We return the conflicting windows so the UI can show why.
     // ----------------------------------------
-    const conflicts = await typedSql<{
-      start_datetime: Date;
-      end_datetime: Date;
-      reason_type: string;
-    }[]>`
+    const conflicts = await sql`
       SELECT start_datetime, end_datetime, reason_type
       FROM vehicle_blackout_dates
       WHERE vehicle_id = ${vehicleId}

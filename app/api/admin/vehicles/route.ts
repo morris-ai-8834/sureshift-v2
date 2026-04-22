@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { VehicleStatus } from "@/lib/constants";
 import {
   isNonEmptyString,
@@ -25,9 +25,10 @@ import type { VehicleRow, CreateVehicleBody } from "@/lib/types";
 // ============================================
 
 export async function GET(): Promise<NextResponse> {
+  const sql = getDB();
   try {
     // Fetch all vehicles without status filtering — admin sees everything
-    const vehicles = await typedSql<VehicleRow[]>`
+    const vehicles = await sql`
       SELECT * FROM vehicles
       ORDER BY vehicle_code ASC
     `;
@@ -48,6 +49,7 @@ export async function GET(): Promise<NextResponse> {
 // ============================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const sql = getDB();
   try {
     let body: CreateVehicleBody;
     try {
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Use provided status or default to available
     const status = body.status ?? VehicleStatus.AVAILABLE;
 
-    const newVehicles = await typedSql<{ id: string; vehicle_code: string }[]>`
+    const newVehicles = await sql`
       INSERT INTO vehicles (
         vehicle_code, year, make, model, trim,
         slug, headline_name, description_short, description_long,

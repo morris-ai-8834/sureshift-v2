@@ -21,7 +21,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import {
   VehicleStatus,
   ReservationStatus,
@@ -30,13 +30,14 @@ import {
   BusinessRules,
 } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/helpers";
-import type { DashboardStats, ReservationWithDetails } from "@/lib/types";
+import type { DashboardStats } from "@/lib/types";
 
 // ============================================
 // GET /api/admin/dashboard
 // ============================================
 
 export async function GET(): Promise<NextResponse> {
+  const sql = getDB();
   try {
     // ============================================
     // SECTION: Fleet counts
@@ -44,13 +45,13 @@ export async function GET(): Promise<NextResponse> {
     // ============================================
 
     // Total vehicles ever added to the fleet (regardless of status)
-    const totalVehiclesResult = await typedSql<[{ count: string }]>`
+    const totalVehiclesResult = await sql`
       SELECT COUNT(*) AS count FROM vehicles
     `;
     const totalVehicles = parseInt(totalVehiclesResult[0].count, 10);
 
     // Available = ready to book right now
-    const availableVehiclesResult = await typedSql<[{ count: string }]>`
+    const availableVehiclesResult = await sql`
       SELECT COUNT(*) AS count FROM vehicles
       WHERE status IN (
         ${VehicleStatus.AVAILABLE},
@@ -60,7 +61,7 @@ export async function GET(): Promise<NextResponse> {
     const availableVehicles = parseInt(availableVehiclesResult[0].count, 10);
 
     // Reserved = currently out on rental or confirmed and waiting for pickup
-    const reservedVehiclesResult = await typedSql<[{ count: string }]>`
+    const reservedVehiclesResult = await sql`
       SELECT COUNT(*) AS count FROM vehicles
       WHERE status = ${VehicleStatus.RESERVED}
     `;
@@ -72,14 +73,14 @@ export async function GET(): Promise<NextResponse> {
     // ============================================
 
     // Active rentals: car is currently out with a customer
-    const activeRentalsResult = await typedSql<[{ count: string }]>`
+    const activeRentalsResult = await sql`
       SELECT COUNT(*) AS count FROM reservations
       WHERE reservation_status = ${ReservationStatus.ACTIVE}
     `;
     const activeRentals = parseInt(activeRentalsResult[0].count, 10);
 
     // Pending deposits: reservation created but customer hasn't paid yet
-    const pendingDepositsResult = await typedSql<[{ count: string }]>`
+    const pendingDepositsResult = await sql`
       SELECT COUNT(*) AS count FROM reservations
       WHERE reservation_status = ${ReservationStatus.AWAITING_DEPOSIT}
         AND deposit_status = ${DepositStatus.NOT_PAID}
@@ -88,7 +89,7 @@ export async function GET(): Promise<NextResponse> {
 
     // Pending signatures: agreement sent but not yet signed
     // (awaiting_deposit reservations with unsigned agreements)
-    const pendingSignaturesResult = await typedSql<[{ count: string }]>`
+    const pendingSignaturesResult = await sql`
       SELECT COUNT(*) AS count FROM reservations
       WHERE signature_status != ${SignatureStatus.SIGNED}
         AND reservation_status IN (
@@ -103,7 +104,7 @@ export async function GET(): Promise<NextResponse> {
     // Reservations with pickup in the next UPCOMING_PICKUP_WINDOW_HOURS hours.
     // These need admin attention — confirm vehicle is prepped, customer is ready.
     // ============================================
-    const upcomingPickups = await typedSql<ReservationWithDetails[]>`
+    const upcomingPickups = await sql`
       SELECT
         r.*,
         c.first_name  AS customer_first_name,
@@ -131,7 +132,7 @@ export async function GET(): Promise<NextResponse> {
     // SECTION: Recent reservations
     // Last N reservations across all statuses — the admin's activity feed.
     // ============================================
-    const recentReservations = await typedSql<ReservationWithDetails[]>`
+    const recentReservations = await sql`
       SELECT
         r.*,
         c.first_name  AS customer_first_name,

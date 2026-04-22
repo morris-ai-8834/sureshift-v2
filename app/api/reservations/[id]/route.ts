@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sql, typedSql } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { getErrorMessage } from "@/lib/helpers";
 import type { ReservationWithDetails } from "@/lib/types";
 
@@ -25,6 +25,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const sql = getDB();
   try {
     const { id } = await params;
 
@@ -37,7 +38,7 @@ export async function GET(
 
     // Fetch the reservation joined with vehicle and customer data.
     // This single query gives us everything needed for the admin detail view.
-    const reservations = await typedSql<ReservationWithDetails[]>`
+    const reservations = await sql`
       SELECT
         r.*,
         c.first_name  AS customer_first_name,
