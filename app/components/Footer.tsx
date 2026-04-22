@@ -21,10 +21,10 @@ export default function Footer() {
             </p>
             <div className="mt-4 flex flex-col gap-1.5">
               <a
-                href="tel:8326277706"
+                href="tel:8000000000"
                 className="text-sm text-[#7A8B9A] hover:text-white transition-colors flex items-center gap-2"
               >
-                <span>📞</span> (832) 627-7706
+                <span>📞</span> (800) 000-0000
               </a>
               <a
                 href="mailto:hello@sureshiftrentals.com"

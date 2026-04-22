@@ -159,10 +159,10 @@ export default function PortalPage() {
               </p>
               <div className="flex flex-col gap-2">
                 <a
-                  href="tel:8326277706"
+                  href="tel:8000000000"
                   className="w-full py-3 text-center border border-gray-700 text-[#7A8B9A] font-medium rounded-xl hover:border-gray-500 hover:text-white transition-colors text-sm"
                 >
-                  📞 (832) 627-7706
+                  📞 (800) 000-0000
                 </a>
                 <a
                   href="mailto:hello@sureshiftrentals.com"
@@ -186,7 +186,7 @@ export default function PortalPage() {
                 Extending your rental is easy. Call us or text and we'll handle it.
               </p>
               <a
-                href="tel:8326277706"
+                href="tel:8000000000"
                 className="text-[#2952CC] text-sm font-bold hover:underline"
               >
                 Call to Extend →

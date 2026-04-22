@@ -110,10 +110,10 @@ export default function HomePage() {
               Browse Available Cars
             </Link>
             <Link
-              href="tel:8326277706"
+              href="tel:8000000000"
               className="px-8 py-4 bg-transparent text-white font-bold rounded-2xl text-lg border border-gray-700 hover:border-gray-500 hover:bg-gray-900/50 transition-all duration-200 w-full sm:w-auto"
             >
-              Call (832) 627-7706
+              Call (800) 000-0000
             </Link>
           </div>
 
@@ -258,10 +258,10 @@ export default function HomePage() {
               View Available Cars
             </Link>
             <a
-              href="tel:8326277706"
+              href="tel:8000000000"
               className="px-8 py-4 border border-[#2952CC]/40 text-[#2952CC] font-bold rounded-2xl text-lg hover:bg-[#2952CC]/10 transition-all duration-200 w-full sm:w-auto"
             >
-              (832) 627-7706
+              (800) 000-0000
             </a>
           </div>
         </div>

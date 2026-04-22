@@ -74,7 +74,7 @@ const faqs = [
     category: "Support",
     question: "What happens if the car breaks down?",
     answer:
-      "Call us immediately at (832) 627-7706. We'll work to get you back on the road as quickly as possible. Our team is available 7 days a week. For major mechanical issues caused by normal wear, we'll arrange a replacement vehicle or prorate the downtime from your rental.",
+      "Call us immediately at (800) 000-0000. We'll work to get you back on the road as quickly as possible. Our team is available 7 days a week. For major mechanical issues caused by normal wear, we'll arrange a replacement vehicle or prorate the downtime from your rental.",
   },
   {
     id: "return",
@@ -114,7 +114,7 @@ export default function FAQPage() {
           </h1>
           <p className="text-[#7A8B9A] text-lg">
             Everything you need to know about renting with SureShift. Can't find your answer?{" "}
-            <a href="tel:8326277706" className="text-[#2952CC] hover:underline">
+            <a href="tel:8000000000" className="text-[#2952CC] hover:underline">
               Call us
             </a>
             .
@@ -198,10 +198,10 @@ export default function FAQPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href="tel:8326277706"
+                href="tel:8000000000"
                 className="px-6 py-3 bg-[#2952CC] text-white font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
               >
-                📞 (832) 627-7706
+                📞 (800) 000-0000
               </a>
               <Link
                 href="/contact"

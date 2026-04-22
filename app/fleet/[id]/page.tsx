@@ -278,7 +278,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                     {isBookable ? "Reserve This Car" : "Currently Unavailable"}
                   </Link>
                   <a
-                    href="tel:8326277706"
+                    href="tel:8000000000"
                     className="w-full text-center py-3.5 rounded-xl border border-gray-700 font-semibold text-[#7A8B9A] hover:border-gray-500 hover:text-white transition-all"
                   >
                     📞 Call to Book
@@ -292,7 +292,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 <p>
                   Have your license and rideshare app ready. Most rentals are confirmed within a few hours.
                   Call{" "}
-                  <a href="tel:8326277706" className="text-[#2952CC] hover:underline">(832) 627-7706</a>{" "}
+                  <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a>{" "}
                   for faster service.
                 </p>
               </div>

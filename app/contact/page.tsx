@@ -56,10 +56,10 @@ export default function ContactPage() {
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-1">Phone / Text</p>
                     <a
-                      href="tel:8326277706"
+                      href="tel:8000000000"
                       className="text-white font-semibold hover:text-[#2952CC] transition-colors"
                     >
-                      (832) 627-7706
+                      (800) 000-0000
                     </a>
                     <p className="text-[#7A8B9A] text-xs mt-0.5">Available 7 days a week</p>
                   </div>
@@ -129,8 +129,8 @@ export default function ContactPage() {
                 </p>
                 <p className="text-sm text-[#7A8B9A]">
                   Need a faster response?{" "}
-                  <a href="tel:8326277706" className="text-[#2952CC] hover:underline">
-                    Call (832) 627-7706
+                  <a href="tel:8000000000" className="text-[#2952CC] hover:underline">
+                    Call (800) 000-0000
                   </a>
                 </p>
                 <button

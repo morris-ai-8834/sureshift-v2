@@ -216,7 +216,7 @@ export default function FleetPage() {
           <p className="text-[#7A8B9A] text-lg max-w-2xl">
             All vehicles are Uber and Lyft eligible. Daily and weekly rates include unlimited miles
             and liability coverage. Reserve online or call{" "}
-            <a href="tel:8326277706" className="text-[#2952CC] hover:underline">(832) 627-7706</a>.
+            <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a>.
           </p>
         </div>
       </section>
@@ -311,10 +311,10 @@ export default function FleetPage() {
             Our fleet updates regularly. Call or text us and we&apos;ll let you know when your ideal vehicle becomes available.
           </p>
           <a
-            href="tel:8326277706"
+            href="tel:8000000000"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#2952CC] text-white font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
           >
-            📞 (832) 627-7706
+            📞 (800) 000-0000
           </a>
         </div>
       </section>

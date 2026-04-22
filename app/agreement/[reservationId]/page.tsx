@@ -53,10 +53,10 @@ Vehicle will be provided with a full tank of fuel. Renter is responsible for ret
 This rental includes unlimited mileage within the continental United States. Interstate travel outside Texas requires advance written approval from SureShift Rentals.
 
 8. DAMAGE REPORTING
-Renter must report any damage, accidents, or incidents immediately by calling (832) 627-7706. Failure to report an incident may result in forfeiture of the deposit.
+Renter must report any damage, accidents, or incidents immediately by calling (800) 000-0000. Failure to report an incident may result in forfeiture of the deposit.
 
 9. BREAKDOWN & ROADSIDE
-In the event of a mechanical breakdown, contact SureShift Rentals immediately at (832) 627-7706. Do not authorize any repairs without prior written approval from the Company.
+In the event of a mechanical breakdown, contact SureShift Rentals immediately at (800) 000-0000. Do not authorize any repairs without prior written approval from the Company.
 
 10. RETURN CONDITION
 The vehicle must be returned clean and in the same condition as received, normal wear excepted. Excessive dirt, odors (including smoke), or interior damage may result in cleaning or repair charges deducted from the deposit.
@@ -167,7 +167,7 @@ export default function AgreementPage({ params }: PageProps) {
         <Navbar />
         <div className="pt-32 text-center px-4">
           <p className="text-red-400 text-lg mb-4">⚠️ {error ?? "Reservation not found"}</p>
-          <p className="text-[#7A8B9A]">Please contact us at (832) 627-7706 for assistance.</p>
+          <p className="text-[#7A8B9A]">Please contact us at (800) 000-0000 for assistance.</p>
         </div>
         <Footer />
       </div>
@@ -321,7 +321,7 @@ export default function AgreementPage({ params }: PageProps) {
           </button>
 
           <p className="text-xs text-gray-600 text-center mt-3">
-            Your signature is encrypted and stored securely. Questions? Call (832) 627-7706.
+            Your signature is encrypted and stored securely. Questions? Call (800) 000-0000.
           </p>
         </div>
       </div>

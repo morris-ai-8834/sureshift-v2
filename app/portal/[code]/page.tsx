@@ -144,10 +144,10 @@ function AwaitingDepositPanel({ data }: { data: PortalData }) {
               Online payment via Stripe coming soon. For now, contact us directly to arrange deposit.
             </p>
             <a
-              href="tel:8326277706"
+              href="tel:8000000000"
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2952CC] text-white text-sm font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
             >
-              📞 Call to Pay: (832) 627-7706
+              📞 Call to Pay: (800) 000-0000
             </a>
           </div>
           <p className="text-xs text-[#7A8B9A]">
@@ -197,7 +197,7 @@ function ConfirmedPanel({ data }: { data: PortalData }) {
             <p className="text-[#7A8B9A] mb-2 font-semibold text-xs uppercase tracking-wider">Pickup Details</p>
             <p className="text-white mb-1">📅 {formatDatetime(pickup)}</p>
             <p className="text-white mb-1">📍 {data.reservation.pickup_location ?? "SureShift Houston Hub — address confirmed via text"}</p>
-            <p className="text-white">📞 Questions? <a href="tel:8326277706" className="text-[#2952CC] hover:underline">(832) 627-7706</a></p>
+            <p className="text-white">📞 Questions? <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a></p>
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@ function ActiveRentalPanel({ data }: { data: PortalData }) {
           </p>
           <div className="flex flex-col gap-2 text-sm">
             <p className="text-[#7A8B9A]">Need help during your rental?</p>
-            <a href="tel:8326277706" className="text-[#2952CC] hover:underline font-semibold">📞 (832) 627-7706</a>
+            <a href="tel:8000000000" className="text-[#2952CC] hover:underline font-semibold">📞 (800) 000-0000</a>
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ function CancelledPanel() {
           <p className="text-[#7A8B9A] text-sm mb-3">
             This reservation has been cancelled. If you have questions about your deposit, please contact us.
           </p>
-          <a href="tel:8326277706"
+          <a href="tel:8000000000"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-xl hover:bg-gray-700 transition-colors"
           >
             📞 Contact SureShift
@@ -416,8 +416,8 @@ export default async function PortalPage({ params }: PageProps) {
         {/* Footer help */}
         <div className="mt-6 text-center">
           <p className="text-[#7A8B9A] text-sm mb-2">Questions about your reservation?</p>
-          <a href="tel:8326277706" className="text-[#2952CC] hover:underline font-semibold">
-            📞 (832) 627-7706
+          <a href="tel:8000000000" className="text-[#2952CC] hover:underline font-semibold">
+            📞 (800) 000-0000
           </a>
           <span className="text-gray-700 mx-3">·</span>
           <Link href="/contact" className="text-[#7A8B9A] hover:text-white text-sm transition-colors">
