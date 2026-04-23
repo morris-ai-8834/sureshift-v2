@@ -5,15 +5,25 @@
  * All maintenance records across fleet with filter tabs.
  */
 
+import { getDB } from "@/lib/db";
 import MaintenanceTable from "./MaintenanceTable";
 
 async function getMaintenanceRecords() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/admin/maintenance`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
+    const sql = getDB();
+    const rows = await sql`
+      SELECT m.*, v.year, v.make, v.model, v.slug
+      FROM maintenance_records m
+      LEFT JOIN vehicles v ON v.id = m.vehicle_id
+      ORDER BY
+        CASE WHEN m.due_date < NOW() AND m.status != 'completed' THEN 0
+             WHEN m.due_date < NOW() + INTERVAL '14 days' AND m.status != 'completed' THEN 1
+             ELSE 2 END,
+        m.due_date ASC NULLS LAST
+    `;
+    return rows;
+  } catch (err) {
+    console.error("[AdminMaint]", err);
     return [];
   }
 }
@@ -21,7 +31,7 @@ async function getMaintenanceRecords() {
 export default async function MaintenancePage() {
   const records = await getMaintenanceRecords();
 
-  const overdue = records.filter((r: { status: string }) => r.status === "overdue").length;
+  const overdue = (records as Record<string,unknown>[]).filter((r) => String(r.status ?? "") === "overdue").length;
 
   return (
     <div className="p-8 max-w-[1400px]">

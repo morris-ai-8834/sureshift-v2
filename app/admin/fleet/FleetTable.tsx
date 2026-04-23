@@ -44,29 +44,29 @@ const STATUS_LABELS: Record<string, string> = {
   retired: "Retired",
 };
 
-function formatRate(rate: string | null | undefined): string {
+function formatRate(rate: string | number | null | undefined): string {
   if (!rate) return "—";
-  return `$${parseFloat(rate).toFixed(0)}/wk`;
+  return `$${parseFloat(String(rate)).toFixed(0)}/wk`;
 }
 
-export default function FleetTable({ vehicles }: { vehicles: FleetRow[] }) {
+export default function FleetTable({ vehicles }: { vehicles: Record<string, unknown>[] }) {
   const [filter, setFilter] = useState<"All" | "Houston" | "Dallas">("All");
 
   const filtered = vehicles.filter((v) => {
     if (filter === "All") return true;
-    return v.location_city.toLowerCase().includes(filter.toLowerCase());
+    return String(v.location_city ?? '').toLowerCase().includes(filter.toLowerCase());
   });
 
   const tabs = ["All", "Houston", "Dallas"] as const;
   const counts = {
     All: vehicles.length,
-    Houston: vehicles.filter((v) => v.location_city.toLowerCase().includes("houston")).length,
-    Dallas: vehicles.filter((v) => v.location_city.toLowerCase().includes("dallas")).length,
+    Houston: vehicles.filter((v) => String(v.location_city ?? '').toLowerCase().includes('houston')).length,
+    Dallas: vehicles.filter((v) => String(v.location_city ?? '').toLowerCase().includes('dallas')).length,
   };
 
   // Status breakdown quick stats
   const byStatus = vehicles.reduce<Record<string, number>>((acc, v) => {
-    acc[v.status] = (acc[v.status] || 0) + 1;
+    const s = String(v.status ?? "unknown"); acc[s] = (acc[s] || 0) + 1;
     return acc;
   }, {});
 
@@ -117,15 +117,15 @@ export default function FleetTable({ vehicles }: { vehicles: FleetRow[] }) {
             </thead>
             <tbody className="divide-y divide-[#1f2937]">
               {filtered.map((v) => {
-                const nextOilChange = v.last_oil_change_mileage
-                  ? v.last_oil_change_mileage + 3000
+                const nextOilChange = Number(v.last_oil_mileage ?? v.last_oil_change_mileage ?? 0)
+                  ? Number(v.last_oil_mileage ?? v.last_oil_change_mileage ?? 0) + 3000
                   : null;
                 const oilDueMiles = nextOilChange && v.current_odometer
-                  ? nextOilChange - v.current_odometer
+                  ? nextOilChange - Number(v.current_odometer ?? 0)
                   : null;
 
                 return (
-                  <tr key={v.id} className="hover:bg-[#1f2937]/50 transition-colors">
+                  <tr key={String(v.id)} className="hover:bg-[#1f2937]/50 transition-colors">
                     {/* Vehicle thumbnail + info */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -134,12 +134,12 @@ export default function FleetTable({ vehicles }: { vehicles: FleetRow[] }) {
                         </div>
                         <div>
                           <p className="text-white font-medium text-sm">
-                            {v.year} {v.make} {v.model}
+                            {String(v.year)} {String(v.make)} {String(v.model)}
                           </p>
                           <p className="text-[#6b7280] text-xs">
-                            <span className="font-mono">{v.vehicle_code}</span>
-                            {v.plate && <span className="ml-1.5">· {v.plate}</span>}
-                            {v.color && <span className="ml-1.5 text-[#4b5563]">{v.color}</span>}
+                            <span className="font-mono">{String(v.vehicle_code ?? "")}</span>
+                            {Boolean(v.plate) && <span className="ml-1.5">· {String(v.plate ?? "")}</span>}
+                            {Boolean(v.color) && <span className="ml-1.5 text-[#4b5563]">{String(v.color ?? "")}</span>}
                           </p>
                         </div>
                       </div>
@@ -147,24 +147,24 @@ export default function FleetTable({ vehicles }: { vehicles: FleetRow[] }) {
 
                     {/* Status */}
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLORS[v.status] ?? "bg-[#1f2937] text-[#6b7280]"}`}>
-                        {STATUS_LABELS[v.status] ?? v.status}
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLORS[String(v.status ?? "")] ?? "bg-[#1f2937] text-[#6b7280]"}`}>
+                        {STATUS_LABELS[String(v.status ?? "")] ?? String(v.status ?? "")}
                       </span>
                     </td>
 
                     {/* City */}
                     <td className="px-4 py-3 text-[#9ca3af] text-xs whitespace-nowrap">
-                      {v.location_city}
+                      {String(v.location_city ?? "")}
                     </td>
 
                     {/* Rate */}
                     <td className="px-4 py-3">
-                      <p className="text-white font-semibold text-sm">{formatRate(v.weekly_rate)}</p>
+                      <p className="text-white font-semibold text-sm">{formatRate(v.weekly_rate as number)}</p>
                     </td>
 
                     {/* Odometer */}
                     <td className="px-4 py-3 text-[#9ca3af] text-xs whitespace-nowrap">
-                      {v.current_odometer ? v.current_odometer.toLocaleString() + " mi" : "—"}
+                      {v.current_odometer ? Number(v.current_odometer).toLocaleString() + " mi" : "—"}
                     </td>
 
                     {/* Next Oil Change */}

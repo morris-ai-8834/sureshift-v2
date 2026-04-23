@@ -41,26 +41,26 @@ function fmtDate(v: string | null | undefined) {
   return new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function fmtDollars(v: string | null | undefined) {
+function fmtDollars(v: string | number | null | undefined) {
   if (!v) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(parseFloat(v));
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(parseFloat(String(v)));
 }
 
-function isDueSoon(row: MaintenanceRow): boolean {
+function isDueSoon(row: Record<string, unknown>): boolean {
   if (row.status === "completed") return false;
   if (row.due_date) {
-    const due = new Date(row.due_date);
+    const due = new Date(String(row.due_date));
     const diff = (due.getTime() - Date.now()) / 86400000;
     return diff <= 14 && diff >= 0;
   }
   if (row.due_mileage && row.current_odometer) {
-    const milesAway = row.due_mileage - row.current_odometer;
+    const milesAway = Number(row.due_mileage) - Number(row.current_odometer);
     return milesAway <= 1000 && milesAway >= 0;
   }
   return false;
 }
 
-export default function MaintenanceTable({ records }: { records: MaintenanceRow[] }) {
+export default function MaintenanceTable({ records }: { records: Record<string, unknown>[] }) {
   const [filter, setFilter] = useState<FilterKey>("All");
 
   const counts: Record<FilterKey, number> = {
@@ -125,59 +125,59 @@ export default function MaintenanceTable({ records }: { records: MaintenanceRow[
               </thead>
               <tbody className="divide-y divide-[#1f2937]">
                 {filtered.map((rec) => {
-                  const style = STATUS_STYLE[rec.status] ?? STATUS_STYLE.pending;
-                  const due = isDueSoon(rec) && rec.status !== "overdue";
+                  const style = STATUS_STYLE[String(rec.status ?? "pending")] ?? STATUS_STYLE.pending;
+                  const due = isDueSoon(rec) && String(rec.status ?? "") !== "overdue";
 
                   return (
                     <tr
-                      key={rec.id}
+                      key={String(rec.id)}
                       className={`hover:bg-[#1f2937]/50 transition-colors ${
-                        rec.status === "overdue" ? "bg-red-500/5" :
+                        String(rec.status ?? "") === "overdue" ? "bg-red-500/5" :
                         due ? "bg-amber-500/5" : ""
                       }`}
                     >
                       {/* Vehicle */}
                       <td className="px-4 py-3">
-                        <Link href={`/admin/fleet/${rec.vehicle_id}`} className="hover:underline">
+                        <Link href={`/admin/fleet/${String(rec.vehicle_id)}`} className="hover:underline">
                           <p className="text-white text-sm font-medium">
-                            {rec.vehicle_year} {rec.vehicle_make} {rec.vehicle_model}
+                            {String(rec.vehicle_year ?? "")} {String(rec.vehicle_make ?? "")} {String(rec.vehicle_model ?? "")}
                           </p>
-                          <p className="text-[#6b7280] text-xs font-mono">{rec.vehicle_code}</p>
+                          <p className="text-[#6b7280] text-xs font-mono">{String(rec.vehicle_code ?? "")}</p>
                         </Link>
                       </td>
 
                       {/* Service Type */}
                       <td className="px-4 py-3 text-white text-sm font-medium whitespace-nowrap">
-                        {rec.service_type}
+                        {String(rec.service_type ?? "")}
                       </td>
 
                       {/* Due Date */}
                       <td className="px-4 py-3">
-                        <span className={`text-xs ${rec.status === "overdue" ? "text-red-400 font-semibold" : due ? "text-amber-400 font-semibold" : "text-[#9ca3af]"}`}>
-                          {fmtDate(rec.due_date)}
+                        <span className={`text-xs ${String(rec.status ?? "") === "overdue" ? "text-red-400 font-semibold" : due ? "text-amber-400 font-semibold" : "text-[#9ca3af]"}`}>
+                          {fmtDate(rec.due_date as string | null)}
                         </span>
                       </td>
 
                       {/* Due Mileage */}
                       <td className="px-4 py-3 text-[#9ca3af] text-xs whitespace-nowrap">
-                        {rec.due_mileage ? rec.due_mileage.toLocaleString() + " mi" : "—"}
+                        {rec.due_mileage ? Number(rec.due_mileage).toLocaleString() + " mi" : "—"}
                       </td>
 
                       {/* Status */}
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${style.badge}`}>
-                          {rec.status}
+                          {String(rec.status ?? "")}
                         </span>
                       </td>
 
                       {/* Cost */}
                       <td className="px-4 py-3 text-white text-sm">
-                        {fmtDollars(rec.cost)}
+                        {fmtDollars(rec.cost as string | number | null)}
                       </td>
 
                       {/* Vendor */}
                       <td className="px-4 py-3 text-[#9ca3af] text-xs">
-                        {rec.vendor ?? "—"}
+                        {String(rec.vendor ?? "—")}
                       </td>
                     </tr>
                   );

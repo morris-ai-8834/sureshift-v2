@@ -7,6 +7,7 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getDB } from "@/lib/db";
 import VehicleDetailClient from "./VehicleDetailClient";
 
 async function getVehicle(id: string) {

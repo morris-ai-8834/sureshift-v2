@@ -2,427 +2,302 @@
  * app/admin/page.tsx
  *
  * Executive Dashboard — /admin
- * Server-rendered. Fetches all stats from /api/admin/dashboard.
+ * Server-rendered directly from DB — no fetch, no base URL issues.
  */
 
 import Link from "next/link";
-import type { DashboardStats } from "@/lib/types";
-import { formatDollars, formatDatetime } from "@/lib/helpers";
-import {
-  Car, CreditCard, Calendar, Wrench, TrendUp, Alert,
-  CheckCircle, ArrowRight,
-} from "../components/Icons";
+import { getDB } from "@/lib/db";
+import Icons from "../components/Icons";
 
-// ─── Data Fetching ────────────────────────────────────────────────
+// ─── Direct DB queries ────────────────────────────────────────────
 
-async function getDashboardStats(): Promise<DashboardStats | null> {
+async function getDashboardData() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/admin/dashboard`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    const sql = getDB();
+
+    const [
+      vehicleStats,
+      revenueStats,
+      pendingDeposits,
+      pendingSigs,
+      maintenanceDue,
+      recentReservations,
+      monthlyRevenue,
+    ] = await Promise.all([
+      // Vehicle counts
+      sql`SELECT
+        COUNT(*) FILTER (WHERE is_bookable = TRUE) as total,
+        COUNT(*) FILTER (WHERE status = 'available') as available,
+        COUNT(*) FILTER (WHERE status = 'active_rental' OR reservation_status IS NOT NULL) as active,
+        COUNT(*) FILTER (WHERE status = 'maintenance') as maintenance
+        FROM vehicles`,
+
+      // Revenue this month
+      sql`SELECT
+        COALESCE(SUM(estimated_rental_subtotal), 0) as month_revenue,
+        COALESCE(SUM(deposit_paid_amount), 0) as deposits_collected,
+        COUNT(*) as total_reservations
+        FROM reservations
+        WHERE created_at >= date_trunc('month', NOW())`,
+
+      // Pending deposits
+      sql`SELECT COUNT(*) as count FROM reservations WHERE deposit_status = 'not_paid' AND reservation_status NOT IN ('cancelled', 'expired')`,
+
+      // Pending signatures
+      sql`SELECT COUNT(*) as count FROM reservations WHERE signature_status IN ('pending', 'not_requested') AND deposit_status = 'paid'`,
+
+      // Maintenance due soon (next 14 days) or overdue
+      sql`SELECT
+        COUNT(*) FILTER (WHERE due_date <= NOW() + INTERVAL '14 days' AND status != 'completed') as due_soon,
+        COUNT(*) FILTER (WHERE due_date < NOW() AND status != 'completed') as overdue
+        FROM maintenance_records`,
+
+      // Recent reservations with customer + vehicle
+      sql`SELECT r.reservation_code, r.reservation_status, r.estimated_rental_subtotal, r.deposit_status,
+          r.pickup_datetime, r.return_datetime, r.created_at,
+          c.first_name, c.last_name,
+          v.make, v.model, v.year
+        FROM reservations r
+        LEFT JOIN customers c ON c.id = r.customer_id
+        LEFT JOIN vehicles v ON v.id = r.vehicle_id
+        ORDER BY r.created_at DESC LIMIT 8`,
+
+      // Monthly revenue last 6 months
+      sql`SELECT
+        to_char(date_trunc('month', created_at), 'Mon') as month,
+        COALESCE(SUM(estimated_rental_subtotal), 0) as revenue
+        FROM reservations
+        WHERE created_at >= NOW() - INTERVAL '6 months'
+        GROUP BY date_trunc('month', created_at)
+        ORDER BY date_trunc('month', created_at) ASC`,
+    ]);
+
+    const vehicles = vehicleStats[0] as Record<string, unknown>;
+    const revenue = revenueStats[0] as Record<string, unknown>;
+    const maint = maintenanceDue[0] as Record<string, unknown>;
+
+    const totalVehicles = Number(vehicles.total) || 0;
+    const activeRentals = Number(vehicles.active) || 0;
+    const utilization = totalVehicles > 0 ? Math.round((activeRentals / totalVehicles) * 100) : 0;
+
+    return {
+      totalVehicles,
+      available: Number(vehicles.available) || 0,
+      activeRentals,
+      maintenance: Number(vehicles.maintenance) || 0,
+      utilization,
+      monthRevenue: Number(revenue.month_revenue) || 0,
+      totalReservations: Number(revenue.total_reservations) || 0,
+      pendingDeposits: Number((pendingDeposits[0] as Record<string, unknown>).count) || 0,
+      pendingSigs: Number((pendingSigs[0] as Record<string, unknown>).count) || 0,
+      maintenanceDueSoon: Number(maint.due_soon) || 0,
+      maintenanceOverdue: Number(maint.overdue) || 0,
+      recentReservations: recentReservations as Record<string, unknown>[],
+      monthlyRevenue: monthlyRevenue as Record<string, unknown>[],
+    };
+  } catch (err) {
+    console.error("[AdminDashboard] DB error:", err);
     return null;
   }
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  value,
-  sub,
-  accent = "text-white",
-  Icon,
-  trend,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: string;
-  Icon?: React.ComponentType<{ className?: string }>;
-  trend?: { dir: "up" | "down"; label: string };
-}) {
-  return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 relative overflow-hidden">
-      {Icon && (
-        <div className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-[#1f2937] flex items-center justify-center">
-          <Icon className="w-4 h-4 text-[#6b7280]" />
-        </div>
-      )}
-      <p className="text-[#6b7280] text-xs font-medium uppercase tracking-wider mb-3">{label}</p>
-      <p className={`text-3xl font-black mb-1 ${accent}`}>{value}</p>
-      {sub && <p className="text-[#6b7280] text-xs">{sub}</p>}
-      {trend && (
-        <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trend.dir === "up" ? "text-emerald-400" : "text-red-400"}`}>
-          <TrendUp className={`w-3 h-3 ${trend.dir === "down" ? "rotate-180" : ""}`} />
-          {trend.label}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Status Chip ─────────────────────────────────────────────────
+// ─── Status chip ─────────────────────────────────────────────────
 
 function StatusChip({ status }: { status: string }) {
   const map: Record<string, string> = {
-    pending:         "bg-yellow-500/15 text-yellow-400",
-    awaiting_deposit:"bg-yellow-500/15 text-yellow-400",
-    deposit_paid:    "bg-blue-500/15 text-blue-400",
-    agreement_sent:  "bg-violet-500/15 text-violet-400",
-    confirmed:       "bg-emerald-500/15 text-emerald-400",
-    active:          "bg-[#2952CC]/20 text-[#5b82f5]",
-    completed:       "bg-[#1f2937] text-[#6b7280]",
-    cancelled:       "bg-red-500/15 text-red-400",
+    awaiting_deposit: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    deposit_paid: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    confirmed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    active: "bg-[#2952CC]/20 text-[#6b9fff] border-[#2952CC]/30",
+    completed: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
   };
+  const cls = map[status] ?? "bg-gray-500/10 text-gray-400 border-gray-500/20";
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${map[status] ?? "bg-[#1f2937] text-[#6b7280]"}`}>
+    <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-semibold border ${cls}`}>
       {status.replace(/_/g, " ")}
     </span>
   );
 }
 
-// ─── Bar Chart (inline SVG) ───────────────────────────────────────
+// ─── Bar chart (inline SVG) ───────────────────────────────────────
 
-function RevenueBarChart({ data }: { data: Array<{ month: string; revenue: number }> }) {
-  const max = Math.max(...data.map((d) => d.revenue), 1);
-  const W = 320;
-  const H = 100;
-  const barW = 30;
-  const gap = (W - data.length * barW) / (data.length + 1);
+function RevenueBarChart({ data }: { data: Record<string, unknown>[] }) {
+  if (!data.length) return <div className="text-gray-600 text-sm text-center py-8">No revenue data yet</div>;
+  const max = Math.max(...data.map(d => Number(d.revenue)), 1);
+  const barWidth = Math.floor(280 / data.length) - 8;
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full">
-        {data.map((d, i) => {
-          const barH = Math.max(4, (d.revenue / max) * H);
-          const x = gap + i * (barW + gap);
-          const y = H - barH;
-          return (
-            <g key={i}>
-              <rect
-                x={x} y={y} width={barW} height={barH}
-                rx={4}
-                fill={i === data.length - 1 ? "#2952CC" : "#1f2937"}
-                className="transition-all"
-              />
-              <text
-                x={x + barW / 2} y={H + 14}
-                textAnchor="middle"
-                fill="#6b7280"
-                fontSize={9}
-              >
-                {d.month}
-              </text>
-              {i === data.length - 1 && (
-                <text
-                  x={x + barW / 2} y={y - 4}
-                  textAnchor="middle"
-                  fill="#5b82f5"
-                  fontSize={8}
-                  fontWeight="600"
-                >
-                  ${Math.round(d.revenue / 100) * 100 === d.revenue ? (d.revenue / 1000).toFixed(1) + "k" : d.revenue}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-// ─── Donut Chart (inline SVG) ─────────────────────────────────────
-
-function FleetDonut({ available, active, maintenance }: { available: number; active: number; maintenance: number }) {
-  const total = available + active + maintenance || 1;
-  const R = 40;
-  const cx = 60;
-  const cy = 60;
-  const circumference = 2 * Math.PI * R;
-
-  const segments = [
-    { value: active, color: "#2952CC", label: "Active" },
-    { value: available, color: "#10b981", label: "Available" },
-    { value: maintenance, color: "#f59e0b", label: "Maintenance" },
-  ];
-
-  let offset = 0;
-  const arcs = segments.map((seg) => {
-    const pct = seg.value / total;
-    const dash = pct * circumference;
-    const gap = circumference - dash;
-    const arc = { ...seg, dasharray: `${dash} ${gap}`, offset: circumference * (1 - offset) - circumference * 0.25 };
-    offset += pct;
-    return arc;
-  });
-
-  return (
-    <div className="flex items-center gap-6">
-      <svg viewBox="0 0 120 120" className="w-28 h-28 flex-shrink-0">
-        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#1f2937" strokeWidth={16} />
-        {arcs.map((arc, i) => (
-          <circle
-            key={i}
-            cx={cx} cy={cy} r={R}
-            fill="none"
-            stroke={arc.color}
-            strokeWidth={16}
-            strokeDasharray={arc.dasharray}
-            strokeDashoffset={arc.offset}
-            strokeLinecap="butt"
-            style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
-          />
-        ))}
-        <text x={cx} y={cy - 4} textAnchor="middle" fill="white" fontSize={14} fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="#6b7280" fontSize={7}>vehicles</text>
-      </svg>
-      <div className="space-y-2">
-        {segments.map((seg) => (
-          <div key={seg.label} className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
-            <span className="text-[#9ca3af] text-xs">{seg.label}</span>
-            <span className="text-white text-xs font-semibold ml-auto pl-3">{seg.value}</span>
+    <div className="flex items-end gap-2 h-32 px-2">
+      {data.map((d, i) => {
+        const h = Math.max(4, Math.round((Number(d.revenue) / max) * 112));
+        return (
+          <div key={i} className="flex flex-col items-center gap-1 flex-1">
+            <div className="text-[10px] text-gray-500">${Number(d.revenue) > 0 ? Math.round(Number(d.revenue)) : ""}</div>
+            <div
+              className="bg-[#2952CC]/70 hover:bg-[#2952CC] transition-colors rounded-t-sm w-full"
+              style={{ height: `${h}px` }}
+              title={`${String(d.month)}: $${Number(d.revenue).toFixed(0)}`}
+            />
+            <div className="text-[10px] text-gray-500">{String(d.month)}</div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────
+// ─── PAGE ─────────────────────────────────────────────────────────
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const data = await getDashboardData();
 
-  if (!stats) {
+  if (!data) {
     return (
       <div className="p-8">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
-          <p className="text-red-400 font-semibold">⚠ Failed to load dashboard data</p>
-          <p className="text-[#6b7280] text-sm mt-1">Check server logs or database connection.</p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-red-400 text-sm">
+          Failed to load dashboard data. Check database connection.
         </div>
       </div>
     );
   }
 
-  const {
-    totalVehicles, availableVehicles, reservedVehicles, activeRentals,
-    pendingDeposits, pendingSignatures, revenueThisMonth, maintenanceDueSoon,
-    fleetUtilization, recentReservations, monthlyRevenue, fleetStatusBreakdown,
-  } = stats;
-
   return (
-    <div className="p-8 max-w-[1400px]">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-[#6b7280] text-sm mt-0.5">SureShift Rentals — Operations Overview</p>
-        </div>
-        <Link
-          href="/admin/reservations"
-          className="flex items-center gap-2 px-4 py-2 bg-[#2952CC] text-white rounded-lg text-sm font-medium hover:bg-[#3561e0] transition-colors"
-        >
-          All Reservations
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+      <div className="mb-8">
+        <h1 className="text-2xl font-black text-white">Operations Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">SureShift Rentals · Houston & Dallas</p>
       </div>
 
-      {/* Stat Cards — 6 across */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-        <StatCard
-          label="Revenue This Month"
-          value={formatDollars(revenueThisMonth)}
-          accent="text-emerald-400"
-          Icon={CreditCard}
-          trend={{ dir: "up", label: "+12% vs last month" }}
-        />
-        <StatCard
-          label="Active Rentals"
-          value={activeRentals}
-          sub="vehicles currently out"
-          accent="text-[#5b82f5]"
-          Icon={Car}
-        />
-        <StatCard
-          label="Available"
-          value={availableVehicles}
-          sub={`of ${totalVehicles} total`}
-          accent="text-emerald-400"
-          Icon={CheckCircle}
-        />
-        <StatCard
-          label="Pending Deposits"
-          value={pendingDeposits}
-          sub="awaiting payment"
-          accent={pendingDeposits > 0 ? "text-yellow-400" : "text-white"}
-          Icon={CreditCard}
-        />
-        <StatCard
-          label="Maintenance Due"
-          value={maintenanceDueSoon}
-          sub="next 14 days"
-          accent={maintenanceDueSoon > 0 ? "text-orange-400" : "text-white"}
-          Icon={Wrench}
-        />
-        <StatCard
-          label="Fleet Utilization"
-          value={`${fleetUtilization}%`}
-          sub={`${activeRentals} of ${totalVehicles - (stats.fleetStatusBreakdown.maintenance || 0)} bookable`}
-          accent="text-white"
-          Icon={Calendar}
-        />
+        {[
+          { label: "Revenue MTD", value: `$${data.monthRevenue.toLocaleString()}`, sub: `${data.totalReservations} reservations`, Icon: Icons.CreditCard, accent: "text-emerald-400" },
+          { label: "Active Rentals", value: data.activeRentals, sub: `${data.utilization}% utilization`, Icon: Icons.Car, accent: "text-blue-400" },
+          { label: "Available", value: data.available, sub: `of ${data.totalVehicles} total`, Icon: Icons.Check, accent: "text-white" },
+          { label: "Pending Deposits", value: data.pendingDeposits, sub: "need payment", Icon: Icons.CreditCard, accent: data.pendingDeposits > 0 ? "text-amber-400" : "text-white" },
+          { label: "Maint Due Soon", value: data.maintenanceDueSoon, sub: `${data.maintenanceOverdue} overdue`, Icon: Icons.Wrench, accent: data.maintenanceOverdue > 0 ? "text-red-400" : data.maintenanceDueSoon > 0 ? "text-amber-400" : "text-white" },
+          { label: "Utilization", value: `${data.utilization}%`, sub: `${data.activeRentals} active`, Icon: Icons.Speedometer, accent: data.utilization > 60 ? "text-emerald-400" : "text-white" },
+        ].map((card) => (
+          <div key={card.label} className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 relative">
+            {card.Icon && (
+              <div className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-[#1f2937] flex items-center justify-center">
+                <card.Icon className="w-3.5 h-3.5 text-gray-500" />
+              </div>
+            )}
+            <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-2">{card.label}</p>
+            <p className={`text-2xl font-black mb-0.5 ${card.accent}`}>{card.value}</p>
+            <p className="text-gray-600 text-[11px]">{card.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Revenue Bar Chart */}
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-white font-semibold text-sm">Monthly Revenue</h3>
-              <p className="text-[#6b7280] text-xs">Last 6 months</p>
-            </div>
-            <span className="text-emerald-400 text-xs font-medium bg-emerald-400/10 px-2 py-1 rounded-full">
-              {formatDollars(revenueThisMonth)} this month
-            </span>
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+        {/* Revenue chart */}
+        <div className="lg:col-span-2 bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold text-white">Monthly Revenue</h2>
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider">Last 6 months</span>
           </div>
-          {monthlyRevenue.length > 0 ? (
-            <RevenueBarChart data={monthlyRevenue} />
-          ) : (
-            <div className="h-32 flex items-center justify-center text-[#6b7280] text-sm">
-              No revenue data yet
-            </div>
-          )}
+          <RevenueBarChart data={data.monthlyRevenue} />
         </div>
 
-        {/* Fleet Status Donut */}
+        {/* Fleet status */}
         <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
-          <div className="mb-4">
-            <h3 className="text-white font-semibold text-sm">Fleet Status</h3>
-            <p className="text-[#6b7280] text-xs">Current distribution</p>
+          <h2 className="text-sm font-bold text-white mb-6">Fleet Status</h2>
+          <div className="space-y-3">
+            {[
+              { label: "Available", count: data.available, color: "bg-emerald-400" },
+              { label: "Active Rental", count: data.activeRentals, color: "bg-[#2952CC]" },
+              { label: "Maintenance", count: data.maintenance, color: "bg-amber-400" },
+              { label: "Other", count: Math.max(0, data.totalVehicles - data.available - data.activeRentals - data.maintenance), color: "bg-gray-600" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
+                <span className="text-sm text-gray-400 flex-1">{item.label}</span>
+                <span className="text-sm font-bold text-white">{item.count}</span>
+                <div className="w-20 h-1.5 bg-[#1f2937] rounded-full overflow-hidden">
+                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${data.totalVehicles ? (item.count / data.totalVehicles) * 100 : 0}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
-          <FleetDonut
-            available={fleetStatusBreakdown.available}
-            active={fleetStatusBreakdown.active}
-            maintenance={fleetStatusBreakdown.maintenance}
-          />
         </div>
       </div>
 
-      {/* Action Queue */}
-      {(pendingDeposits > 0 || pendingSignatures > 0 || maintenanceDueSoon > 0) && (
+      {/* Action queue */}
+      {(data.pendingDeposits > 0 || data.pendingSigs > 0 || data.maintenanceOverdue > 0) && (
         <div className="mb-8">
-          <h2 className="text-[#6b7280] text-xs font-semibold uppercase tracking-wider mb-3">
-            Action Queue
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {pendingDeposits > 0 && (
-              <Link href="/admin/reservations?status=awaiting_deposit">
-                <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-4 hover:border-yellow-500/40 transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-lg bg-yellow-500/15 flex items-center justify-center flex-shrink-0">
-                    <CreditCard className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-lg leading-none">{pendingDeposits}</p>
-                    <p className="text-yellow-400 text-xs font-medium mt-0.5">Awaiting Deposit</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-[#4b5563] flex-shrink-0" />
+          <h2 className="text-sm font-bold text-white mb-3">Action Required</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {data.pendingDeposits > 0 && (
+              <Link href="/admin/reservations" className="bg-amber-500/08 border border-amber-500/20 rounded-xl p-4 hover:bg-amber-500/12 transition-colors flex items-center justify-between group">
+                <div>
+                  <p className="text-amber-400 font-bold text-lg">{data.pendingDeposits}</p>
+                  <p className="text-amber-400/70 text-xs">Awaiting deposit</p>
                 </div>
+                <Icons.ArrowRight className="w-4 h-4 text-amber-400/50 group-hover:text-amber-400 transition-colors" />
               </Link>
             )}
-            {pendingSignatures > 0 && (
-              <Link href="/admin/reservations?status=agreement_sent">
-                <div className="bg-violet-500/8 border border-violet-500/20 rounded-xl p-4 flex items-center gap-4 hover:border-violet-500/40 transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
-                    <Alert className="w-5 h-5 text-violet-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-lg leading-none">{pendingSignatures}</p>
-                    <p className="text-violet-400 text-xs font-medium mt-0.5">Awaiting Signature</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-[#4b5563] flex-shrink-0" />
+            {data.pendingSigs > 0 && (
+              <Link href="/admin/reservations" className="bg-blue-500/08 border border-blue-500/20 rounded-xl p-4 hover:bg-blue-500/12 transition-colors flex items-center justify-between group">
+                <div>
+                  <p className="text-blue-400 font-bold text-lg">{data.pendingSigs}</p>
+                  <p className="text-blue-400/70 text-xs">Awaiting signature</p>
                 </div>
+                <Icons.ArrowRight className="w-4 h-4 text-blue-400/50 group-hover:text-blue-400 transition-colors" />
               </Link>
             )}
-            {maintenanceDueSoon > 0 && (
-              <Link href="/admin/maintenance">
-                <div className="bg-orange-500/8 border border-orange-500/20 rounded-xl p-4 flex items-center gap-4 hover:border-orange-500/40 transition-colors cursor-pointer">
-                  <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-                    <Wrench className="w-5 h-5 text-orange-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-lg leading-none">{maintenanceDueSoon}</p>
-                    <p className="text-orange-400 text-xs font-medium mt-0.5">Maintenance Due</p>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-[#4b5563] flex-shrink-0" />
+            {data.maintenanceOverdue > 0 && (
+              <Link href="/admin/maintenance" className="bg-red-500/08 border border-red-500/20 rounded-xl p-4 hover:bg-red-500/12 transition-colors flex items-center justify-between group">
+                <div>
+                  <p className="text-red-400 font-bold text-lg">{data.maintenanceOverdue}</p>
+                  <p className="text-red-400/70 text-xs">Maintenance overdue</p>
                 </div>
+                <Icons.ArrowRight className="w-4 h-4 text-red-400/50 group-hover:text-red-400 transition-colors" />
               </Link>
             )}
           </div>
         </div>
       )}
 
-      {/* Recent Reservations Table */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[#6b7280] text-xs font-semibold uppercase tracking-wider">
-            Recent Reservations
-          </h2>
-          <Link href="/admin/reservations" className="text-[#5b82f5] text-xs hover:underline">
-            View all →
-          </Link>
+      {/* Recent reservations */}
+      <div className="bg-[#111827] border border-[#1f2937] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1f2937]">
+          <h2 className="text-sm font-bold text-white">Recent Reservations</h2>
+          <Link href="/admin/reservations" className="text-[#2952CC] text-xs font-semibold hover:text-blue-400 transition-colors">View all →</Link>
         </div>
-
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl overflow-hidden">
-          {recentReservations.length === 0 ? (
-            <div className="py-12 text-center text-[#6b7280] text-sm">No reservations yet</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#1f2937]">
-                    {["Code", "Customer", "Vehicle", "Dates", "Status", "Amount"].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 text-[#6b7280] text-xs font-medium uppercase tracking-wider">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1f2937]">
-                  {recentReservations.map((res) => (
-                    <tr key={res.id} className="hover:bg-[#1f2937]/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <Link href={`/portal/${res.reservation_code}`} className="font-mono text-[#5b82f5] text-xs hover:underline">
-                          {res.reservation_code}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-white text-sm font-medium">{res.customer_first_name} {res.customer_last_name}</p>
-                        <p className="text-[#6b7280] text-xs">{res.customer_phone}</p>
-                      </td>
-                      <td className="px-4 py-3 text-[#9ca3af] text-xs">
-                        {res.vehicle_year} {res.vehicle_make} {res.vehicle_model}
-                      </td>
-                      <td className="px-4 py-3 text-[#9ca3af] text-xs">
-                        <div>{formatDatetime(new Date(res.pickup_datetime))}</div>
-                        <div className="text-[#6b7280]">→ {formatDatetime(new Date(res.return_datetime))}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusChip status={res.reservation_status} />
-                      </td>
-                      <td className="px-4 py-3 text-white text-sm font-medium">
-                        {formatDollars(res.estimated_rental_subtotal)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 text-[11px] uppercase tracking-wider border-b border-[#1f2937]">
+                <th className="text-left px-6 py-3 font-semibold">Code</th>
+                <th className="text-left px-6 py-3 font-semibold">Customer</th>
+                <th className="text-left px-6 py-3 font-semibold">Vehicle</th>
+                <th className="text-left px-6 py-3 font-semibold">Status</th>
+                <th className="text-right px-6 py-3 font-semibold">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1f2937]">
+              {data.recentReservations.length === 0 ? (
+                <tr><td colSpan={5} className="text-center text-gray-600 py-8">No reservations yet</td></tr>
+              ) : data.recentReservations.map((r) => (
+                <tr key={String(r.reservation_code)} className="hover:bg-[#1f2937]/50 transition-colors">
+                  <td className="px-6 py-4 font-mono text-[#2952CC] text-xs">{String(r.reservation_code)}</td>
+                  <td className="px-6 py-4 text-gray-300">{r.first_name ? `${String(r.first_name)} ${String(r.last_name)}` : "—"}</td>
+                  <td className="px-6 py-4 text-gray-400">{r.year ? `${String(r.year)} ${String(r.make)} ${String(r.model)}` : "—"}</td>
+                  <td className="px-6 py-4"><StatusChip status={String(r.reservation_status)} /></td>
+                  <td className="px-6 py-4 text-right text-white font-semibold">
+                    {r.estimated_rental_subtotal ? `$${Number(r.estimated_rental_subtotal).toFixed(0)}` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

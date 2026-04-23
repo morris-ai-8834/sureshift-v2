@@ -6,14 +6,23 @@
  */
 
 import FleetTable from "./FleetTable";
+import { getDB } from "@/lib/db";
 
 async function getFleet() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/admin/fleet`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
+    const sql = getDB();
+    const rows = await sql`
+      SELECT v.*,
+        (SELECT completed_mileage FROM maintenance_records
+         WHERE vehicle_id = v.id AND service_type ILIKE '%oil%' AND status = 'completed'
+         ORDER BY completed_date DESC LIMIT 1) as last_oil_mileage,
+        (SELECT MAX(return_datetime) FROM reservations WHERE vehicle_id = v.id) as last_rental
+      FROM vehicles v
+      ORDER BY v.vehicle_code ASC
+    `;
+    return rows;
+  } catch (err) {
+    console.error("[AdminFleet]", err);
     return [];
   }
 }
