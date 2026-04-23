@@ -7,6 +7,7 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
+export const dynamic = 'force-dynamic';
 import { getDB } from "@/lib/db";
 import VehicleDetailClient from "./VehicleDetailClient";
 

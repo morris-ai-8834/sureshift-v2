@@ -5,6 +5,7 @@
  * All maintenance records across fleet with filter tabs.
  */
 
+export const dynamic = 'force-dynamic';
 import { getDB } from "@/lib/db";
 import MaintenanceTable from "./MaintenanceTable";
 

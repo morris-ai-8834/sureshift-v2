@@ -6,6 +6,7 @@
  */
 
 import FleetTable from "./FleetTable";
+export const dynamic = 'force-dynamic';
 import { getDB } from "@/lib/db";
 
 async function getFleet() {

@@ -9,6 +9,9 @@ import Link from "next/link";
 import { getDB } from "@/lib/db";
 import Icons from "../components/Icons";
 
+// Force dynamic rendering so DATABASE_URL is available at runtime
+export const dynamic = 'force-dynamic';
+
 // ─── Direct DB queries ────────────────────────────────────────────
 
 async function getDashboardData() {
