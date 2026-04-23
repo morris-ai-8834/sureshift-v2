@@ -25,10 +25,10 @@ export default function LocationsPage() {
           {/* Background */}
           <div className="absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 group-hover:opacity-90" />
 
-          {/* City skyline image — Houston */}
+          {/* Houston skyline photo */}
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-500"
-            style={{ backgroundImage: "url('/hero-bg.png')" }}
+            className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-65 transition-opacity duration-500"
+            style={{ backgroundImage: "url('/houston-skyline.png')" }}
           />
 
           {/* Blue tint overlay */}
@@ -79,18 +79,12 @@ export default function LocationsPage() {
           {/* Background */}
           <div className="absolute inset-0 bg-[#0A0F1A] transition-opacity duration-500 group-hover:opacity-90" />
 
-          {/* Gradient overlay — different tone for Dallas */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628]/80 to-[#0A0F1A]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-          {/* Subtle grid */}
+          {/* Dallas skyline photo */}
           <div
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-              backgroundSize: "60px 60px",
-            }}
+            className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-65 transition-opacity duration-500"
+            style={{ backgroundImage: "url('/dallas-skyline.png')" }}
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
           {/* Content */}
           <div className="relative z-10 text-center px-8">
