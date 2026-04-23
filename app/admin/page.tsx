@@ -121,7 +121,7 @@ export default async function AdminDashboardPage() {
 
         {!stats ? (
           <div className="text-center py-24">
-            <p className="text-red-400 mb-2">⚠️ Failed to load dashboard data</p>
+            <p className="text-red-400 mb-2">⚠ Failed to load dashboard data</p>
             <p className="text-[#7A8B9A] text-sm">Check the server logs or database connection.</p>
           </div>
         ) : (
@@ -144,7 +144,7 @@ export default async function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {stats.pendingDeposits > 0 && (
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex items-center gap-4">
-                      <div className="text-3xl">💳</div>
+                      <div className="text-3xl"></div>
                       <div>
                         <p className="text-white font-bold text-xl">{stats.pendingDeposits}</p>
                         <p className="text-amber-400 text-sm font-medium">Pending Deposit{stats.pendingDeposits !== 1 ? "s" : ""}</p>
@@ -159,7 +159,7 @@ export default async function AdminDashboardPage() {
                   )}
                   {stats.pendingSignatures > 0 && (
                     <div className="bg-violet-500/10 border border-violet-500/30 rounded-2xl p-5 flex items-center gap-4">
-                      <div className="text-3xl">✍️</div>
+                      <div className="text-3xl"></div>
                       <div>
                         <p className="text-white font-bold text-xl">{stats.pendingSignatures}</p>
                         <p className="text-violet-400 text-sm font-medium">Unsigned Agreement{stats.pendingSignatures !== 1 ? "s" : ""}</p>
@@ -185,7 +185,7 @@ export default async function AdminDashboardPage() {
                 <div className="flex flex-col gap-3">
                   {stats.upcomingPickups.map((res) => (
                     <div key={res.id} className="bg-gray-900 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4">
-                      <div className="w-10 h-10 bg-emerald-500/15 rounded-xl flex items-center justify-center text-lg flex-shrink-0">🚗</div>
+                      <div className="w-10 h-10 bg-emerald-500/15 rounded-xl flex items-center justify-center text-lg flex-shrink-0"></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-semibold text-sm truncate">
                           {res.customer_first_name} {res.customer_last_name}

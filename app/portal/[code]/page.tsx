@@ -79,7 +79,7 @@ function StatusTimeline({ current }: { current: string }) {
                 isActive ? "bg-[#2952CC] border-[#2952CC] text-white" :
                 "bg-transparent border-gray-700 text-gray-600"
               }`}>
-                {isDone ? "✓" : i + 1}
+                {isDone ? "" : i + 1}
               </div>
               <span className={`text-xs mt-1.5 font-medium hidden sm:block ${
                 isDone ? "text-emerald-400" : isActive ? "text-white" : "text-gray-600"
@@ -122,7 +122,7 @@ function AwaitingDepositPanel({ data }: { data: PortalData }) {
   return (
     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">💳</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">Deposit Required to Confirm</h3>
           <p className="text-[#7A8B9A] text-sm mb-4">
@@ -147,7 +147,7 @@ function AwaitingDepositPanel({ data }: { data: PortalData }) {
               href="tel:8000000000"
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2952CC] text-white text-sm font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
             >
-              📞 Call to Pay: (800) 000-0000
+              Call to Pay: (800) 000-0000
             </a>
           </div>
           <p className="text-xs text-[#7A8B9A]">
@@ -163,7 +163,7 @@ function AgreementSentPanel({ data }: { data: PortalData }) {
   return (
     <div className="bg-[#2952CC]/10 border border-[#2952CC]/30 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">📄</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">Sign Your Rental Agreement</h3>
           <p className="text-[#7A8B9A] text-sm mb-4">
@@ -173,7 +173,7 @@ function AgreementSentPanel({ data }: { data: PortalData }) {
             href={`/agreement/${data.reservation.id}`}
             className="inline-flex items-center gap-2 px-5 py-3 bg-[#2952CC] text-white text-sm font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
           >
-            ✍️ Sign Agreement
+             Sign Agreement
           </Link>
         </div>
       </div>
@@ -187,7 +187,7 @@ function ConfirmedPanel({ data }: { data: PortalData }) {
   return (
     <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">✅</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">You&apos;re All Set!</h3>
           <p className="text-[#7A8B9A] text-sm mb-4">
@@ -195,9 +195,9 @@ function ConfirmedPanel({ data }: { data: PortalData }) {
           </p>
           <div className="bg-gray-900 rounded-xl p-4 text-sm">
             <p className="text-[#7A8B9A] mb-2 font-semibold text-xs uppercase tracking-wider">Pickup Details</p>
-            <p className="text-white mb-1">📅 {formatDatetime(pickup)}</p>
-            <p className="text-white mb-1">📍 {data.reservation.pickup_location ?? "SureShift Houston Hub — address confirmed via text"}</p>
-            <p className="text-white">📞 Questions? <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a></p>
+            <p className="text-white mb-1">{formatDatetime(pickup)}</p>
+            <p className="text-white mb-1">{data.reservation.pickup_location ?? "SureShift Houston Hub — address confirmed via text"}</p>
+            <p className="text-white">Questions? <a href="tel:8000000000" className="text-[#2952CC] hover:underline">(800) 000-0000</a></p>
           </div>
         </div>
       </div>
@@ -211,7 +211,7 @@ function ActiveRentalPanel({ data }: { data: PortalData }) {
   return (
     <div className="bg-violet-500/10 border border-violet-500/30 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">🚗</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">Rental In Progress</h3>
           <p className="text-[#7A8B9A] text-sm mb-3">
@@ -220,7 +220,7 @@ function ActiveRentalPanel({ data }: { data: PortalData }) {
           </p>
           <div className="flex flex-col gap-2 text-sm">
             <p className="text-[#7A8B9A]">Need help during your rental?</p>
-            <a href="tel:8000000000" className="text-[#2952CC] hover:underline font-semibold">📞 (800) 000-0000</a>
+            <a href="tel:8000000000" className="text-[#2952CC] hover:underline font-semibold">(800) 000-0000</a>
           </div>
         </div>
       </div>
@@ -232,7 +232,7 @@ function CompletedPanel() {
   return (
     <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">🎉</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">Rental Complete</h3>
           <p className="text-[#7A8B9A] text-sm mb-3">
@@ -253,7 +253,7 @@ function CancelledPanel() {
   return (
     <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 mb-6">
       <div className="flex items-start gap-4">
-        <div className="text-3xl">❌</div>
+        <div className="text-3xl"></div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">Reservation Cancelled</h3>
           <p className="text-[#7A8B9A] text-sm mb-3">
@@ -262,7 +262,7 @@ function CancelledPanel() {
           <a href="tel:8000000000"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-800 text-white text-sm font-bold rounded-xl hover:bg-gray-700 transition-colors"
           >
-            📞 Contact SureShift
+            Contact SureShift
           </a>
         </div>
       </div>
@@ -322,7 +322,7 @@ export default async function PortalPage({ params }: PageProps) {
         {status === ReservationStatus.DEPOSIT_PAID && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 mb-6">
             <div className="flex items-start gap-4">
-              <div className="text-3xl">⚙️</div>
+              <div className="text-3xl"></div>
               <div>
                 <h3 className="text-lg font-bold text-white mb-1">Deposit Received — Agreement Being Prepared</h3>
                 <p className="text-[#7A8B9A] text-sm">We received your deposit and are generating your rental agreement. You&apos;ll receive it shortly.</p>
@@ -417,7 +417,7 @@ export default async function PortalPage({ params }: PageProps) {
         <div className="mt-6 text-center">
           <p className="text-[#7A8B9A] text-sm mb-2">Questions about your reservation?</p>
           <a href="tel:8000000000" className="text-[#2952CC] hover:underline font-semibold">
-            📞 (800) 000-0000
+            (800) 000-0000
           </a>
           <span className="text-gray-700 mx-3">·</span>
           <Link href="/contact" className="text-[#7A8B9A] hover:text-white text-sm transition-colors">

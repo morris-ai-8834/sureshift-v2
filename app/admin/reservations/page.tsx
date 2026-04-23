@@ -133,7 +133,7 @@ export default async function AdminReservationsPage({ searchParams }: PageProps)
         {/* Reservations table */}
         {reservations.length === 0 ? (
           <div className="text-center py-24 bg-gray-900 border border-gray-800 rounded-2xl">
-            <div className="text-4xl mb-3">📋</div>
+            <div className="text-4xl mb-3"></div>
             <p className="text-white font-semibold mb-1">No reservations found</p>
             <p className="text-[#7A8B9A] text-sm">
               {statusFilter ? "No reservations with this status." : "No reservations have been created yet."}

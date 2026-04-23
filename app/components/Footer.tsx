@@ -29,7 +29,7 @@ export default function Footer() {
               Reliable weekly rentals for Houston & Dallas gig workers and commuters. No credit check. Drive tomorrow.
             </p>
             <div className="mt-6 flex items-center gap-2 text-white/40 text-sm">
-              <span>📍</span>
+              <span></span>
               <span>Houston &amp; Dallas, TX</span>
             </div>
           </div>

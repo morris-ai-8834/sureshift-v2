@@ -24,8 +24,8 @@ import { getDB } from "@/lib/db";
 // CITY CONFIG
 // ============================================
 const cityConfig: Record<string, { label: string; emoji: string }> = {
-  houston: { label: "Houston", emoji: "🤠" },
-  dallas: { label: "Dallas", emoji: "🌆" },
+  houston: { label: "Houston", emoji: "" },
+  dallas: { label: "Dallas", emoji: "" },
 };
 
 // ============================================

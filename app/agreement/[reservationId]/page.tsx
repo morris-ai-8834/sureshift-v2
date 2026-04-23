@@ -166,7 +166,7 @@ export default function AgreementPage({ params }: PageProps) {
       <div className="min-h-screen bg-[#0D0D0D]">
         <Navbar />
         <div className="pt-32 text-center px-4">
-          <p className="text-red-400 text-lg mb-4">⚠️ {error ?? "Reservation not found"}</p>
+          <p className="text-red-400 text-lg mb-4">! {error ?? "Reservation not found"}</p>
           <p className="text-[#7A8B9A]">Please contact us at (800) 000-0000 for assistance.</p>
         </div>
         <Footer />
@@ -229,7 +229,7 @@ export default function AgreementPage({ params }: PageProps) {
               <span className="text-xs text-amber-400 font-medium">↓ Scroll to read all terms</span>
             )}
             {hasScrolled && (
-              <span className="text-xs text-emerald-400 font-medium">✓ Terms read</span>
+              <span className="text-xs text-emerald-400 font-medium"> Terms read</span>
             )}
           </div>
           <div
@@ -293,14 +293,14 @@ export default function AgreementPage({ params }: PageProps) {
           {/* Scroll reminder */}
           {!hasScrolled && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-4 text-xs text-amber-400">
-              ⚠️ Please scroll through and read the full agreement before signing.
+              ! Please scroll through and read the full agreement before signing.
             </div>
           )}
 
           {/* Submit error */}
           {submitError && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
-              <p className="text-red-400 text-sm">⚠️ {submitError}</p>
+              <p className="text-red-400 text-sm">! {submitError}</p>
             </div>
           )}
 
@@ -316,7 +316,7 @@ export default function AgreementPage({ params }: PageProps) {
                 Submitting Signature...
               </>
             ) : (
-              "✍️ Sign & Confirm Reservation"
+              " Sign & Confirm Reservation"
             )}
           </button>
 

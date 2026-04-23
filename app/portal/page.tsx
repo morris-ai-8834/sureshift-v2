@@ -40,7 +40,7 @@ export default function PortalPage() {
         {/* Status Banner */}
         <div className="bg-emerald-400/10 border border-emerald-400/20 rounded-2xl p-4 sm:p-6 flex items-start sm:items-center gap-4 mb-8 flex-col sm:flex-row">
           <div className="w-10 h-10 bg-emerald-400/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-emerald-400 text-lg">✓</span>
+            <span className="text-emerald-400 text-lg"></span>
           </div>
           <div className="flex-1">
             <p className="text-white font-semibold">Rental Active — {mockRental.vehicle}</p>
@@ -81,21 +81,21 @@ export default function PortalPage() {
               <h2 className="text-white font-bold text-lg mb-4">Pickup Information</h2>
               <div className="flex flex-col gap-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl mt-0.5">📍</span>
+                  <span className="text-xl mt-0.5"></span>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-0.5">Location</p>
                     <p className="text-white font-medium">{mockRental.pickupLocation}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-xl mt-0.5">🕘</span>
+                  <span className="text-xl mt-0.5"></span>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-0.5">Pickup Time</p>
                     <p className="text-white font-medium">{mockRental.pickupTime}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-xl mt-0.5">📋</span>
+                  <span className="text-xl mt-0.5"></span>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-0.5">What to Bring</p>
                     <p className="text-white font-medium">Valid TX license · Deposit cash/card · Insurance if personal</p>
@@ -162,13 +162,13 @@ export default function PortalPage() {
                   href="tel:8000000000"
                   className="w-full py-3 text-center border border-gray-700 text-[#7A8B9A] font-medium rounded-xl hover:border-gray-500 hover:text-white transition-colors text-sm"
                 >
-                  📞 (800) 000-0000
+                  (800) 000-0000
                 </a>
                 <a
                   href="mailto:hello@sureshiftrentals.com"
                   className="w-full py-3 text-center border border-gray-700 text-[#7A8B9A] font-medium rounded-xl hover:border-gray-500 hover:text-white transition-colors text-sm"
                 >
-                  ✉️ Email Support
+                   Email Support
                 </a>
                 <Link
                   href="/contact"

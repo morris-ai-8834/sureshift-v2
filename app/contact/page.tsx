@@ -51,7 +51,7 @@ export default function ContactPage() {
               <div className="flex flex-col gap-5">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#2952CC]/15 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-lg">📞</span>
+                    <span className="text-lg"></span>
                   </div>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-1">Phone / Text</p>
@@ -67,7 +67,7 @@ export default function ContactPage() {
 
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#2952CC]/15 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-lg">✉️</span>
+                    <span className="text-lg"></span>
                   </div>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-1">Email</p>
@@ -83,7 +83,7 @@ export default function ContactPage() {
 
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#2952CC]/15 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-lg">📍</span>
+                    <span className="text-lg"></span>
                   </div>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-1">Location</p>
@@ -120,7 +120,7 @@ export default function ContactPage() {
             {submitted ? (
               <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center h-full flex flex-col items-center justify-center gap-4">
                 <div className="w-16 h-16 bg-emerald-400/15 rounded-full flex items-center justify-center">
-                  <span className="text-3xl">✅</span>
+                  <span className="text-3xl"></span>
                 </div>
                 <h2 className="text-2xl font-black text-white">Message Sent!</h2>
                 <p className="text-[#7A8B9A] max-w-sm">

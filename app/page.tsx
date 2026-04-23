@@ -14,38 +14,15 @@ import Image from "next/image";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { getDB } from "@/lib/db";
+import Icons from "./components/Icons";
 
 const valueProps = [
-  {
-    icon: "✓",
-    title: "No Credit Check",
-    body: "Valid license, deposit, and your drive to hustle. That's all we need.",
-  },
-  {
-    icon: "⚡",
-    title: "Uber & Lyft Approved",
-    body: "Every vehicle is eligible for rideshare platforms from day one.",
-  },
-  {
-    icon: "🔄",
-    title: "Week-by-Week Terms",
-    body: "No long-term commitment. Rent weekly and adjust as your needs change.",
-  },
-  {
-    icon: "🛡️",
-    title: "Liability Included",
-    body: "Basic liability coverage is built into every rental. You're covered.",
-  },
-  {
-    icon: "📍",
-    title: "Houston Local",
-    body: "We're a real Texas team — not a faceless platform. Call us directly.",
-  },
-  {
-    icon: "🔧",
-    title: "Inspected Fleet",
-    body: "Every vehicle is mechanically inspected before it reaches your hands.",
-  },
+  { Icon: Icons.Check, title: "No Credit Check", body: "Valid license, deposit, and your drive to hustle. That's all we need." },
+  { Icon: Icons.Lightning, title: "Uber & Lyft Approved", body: "Every vehicle is eligible for rideshare platforms from day one." },
+  { Icon: Icons.Clock, title: "Week-by-Week Terms", body: "No long-term commitment. Rent weekly and adjust as your needs change." },
+  { Icon: Icons.Shield, title: "Liability Included", body: "Basic liability coverage is built into every rental. You're covered." },
+  { Icon: Icons.Pin, title: "Houston & Dallas", body: "We're a real Texas team — not a faceless platform. Call us directly." },
+  { Icon: Icons.Wrench, title: "Inspected Fleet", body: "Every vehicle is mechanically inspected before it reaches your hands." },
 ];
 
 const steps = [
@@ -234,8 +211,8 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {valueProps.map((prop) => (
               <div key={prop.title} className="group">
-                <div className="w-10 h-10 rounded-xl bg-[#2952CC]/08 flex items-center justify-center text-[#2952CC] text-lg font-bold mb-4 group-hover:bg-[#2952CC]/15 transition-colors">
-                  {prop.icon}
+                <div className="w-10 h-10 rounded-xl bg-[#2952CC]/08 flex items-center justify-center text-[#2952CC] mb-4 group-hover:bg-[#2952CC]/15 transition-colors">
+                  <prop.Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-base font-bold text-gray-900 mb-2">{prop.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{prop.body}</p>

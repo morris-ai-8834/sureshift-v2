@@ -27,6 +27,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
+import Icons from "../../components/Icons";
 
 // ============================================
 // PAGE — client component so we can do scroll effects
@@ -85,11 +86,11 @@ export default function VehicleDetailPage() {
   const gradient = gradients[String(vehicle.make)] ?? gradients.default;
 
   const featureChips = [
-    { icon: "👤", label: `${String(vehicle.seats)} seats` },
+    { Icon: null, label: `${String(vehicle.seats)} seats` },
     { icon: "⚡", label: String(vehicle.fuel_type) },
-    { icon: "⚙️", label: String(vehicle.transmission) },
-    vehicle.mpg_city ? { icon: "🔋", label: `${String(vehicle.mpg_city)} mpg city` } : null,
-    vehicle.mpg_highway ? { icon: "🛣️", label: `${String(vehicle.mpg_highway)} mpg hwy` } : null,
+    { icon: "", label: String(vehicle.transmission) },
+    vehicle.mpg_city ? { icon: "", label: `${String(vehicle.mpg_city)} mpg city` } : null,
+    vehicle.mpg_highway ? { icon: "", label: `${String(vehicle.mpg_highway)} mpg hwy` } : null,
   ].filter(Boolean) as { icon: string; label: string }[];
 
   const safetyFeatures = ["Backup camera", "Tire pressure monitoring", "Forward collision warning", "Anti-lock brakes"];
@@ -308,13 +309,13 @@ export default function VehicleDetailPage() {
 
           <h3 className="text-sm font-bold text-gray-900 mb-4">Convenience</h3>
           <div className="space-y-5 mb-6">
-            {[
-              { icon: "🚗", title: "Skip the rental counter", desc: "Reserve online and receive pickup instructions directly" },
-              { icon: "📋", title: "Digital rental agreement", desc: "Review and sign your agreement before pickup" },
-              { icon: "⏱️", title: "Flexible pickup window", desc: "Coordinate your exact pickup time with us directly" },
-            ].map((item) => (
+            {([
+              { Icon: Icons.Car, title: "Skip the rental counter", desc: "Reserve online and receive pickup instructions directly" },
+              { Icon: Icons.Document, title: "Digital rental agreement", desc: "Review and sign your agreement before pickup" },
+              { Icon: Icons.Clock, title: "Flexible pickup window", desc: "Coordinate your exact pickup time with us directly" },
+            ] as {Icon: React.ComponentType<{className?: string}>; title: string; desc: string}[]).map((item) => (
               <div key={item.title} className="flex items-start gap-4">
-                <span className="text-lg mt-0.5">{item.icon}</span>
+                <item.Icon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="text-sm font-bold text-gray-900">{item.title}</div>
                   <div className="text-sm text-gray-500 mt-0.5">{item.desc}</div>
@@ -325,13 +326,13 @@ export default function VehicleDetailPage() {
 
           <h3 className="text-sm font-bold text-gray-900 mb-4">Peace of mind</h3>
           <div className="space-y-5">
-            {[
-              { icon: "✨", title: "Keep it tidy", desc: "No car wash required, but please return it clean" },
-              { icon: "🛟", title: "Roadside support", desc: "Call us anytime during your rental" },
-              { icon: "💬", title: "24/7 customer support", desc: "We're always reachable by phone or email" },
-            ].map((item) => (
+            {([
+              { Icon: Icons.Sparkle, title: "Keep it tidy", desc: "No car wash required, but please return it clean" },
+              { Icon: Icons.Shield, title: "Roadside support", desc: "Call us anytime during your rental" },
+              { Icon: Icons.Support, title: "24/7 customer support", desc: "We're always reachable by phone or email" },
+            ] as {Icon: React.ComponentType<{className?: string}>; title: string; desc: string}[]).map((item) => (
               <div key={item.title} className="flex items-start gap-4">
-                <span className="text-lg mt-0.5">{item.icon}</span>
+                <item.Icon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="text-sm font-bold text-gray-900">{item.title}</div>
                   <div className="text-sm text-gray-500 mt-0.5">{item.desc}</div>

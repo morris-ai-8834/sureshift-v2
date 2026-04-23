@@ -201,7 +201,7 @@ export default function FAQPage() {
                 href="tel:8000000000"
                 className="px-6 py-3 bg-[#2952CC] text-white font-bold rounded-xl hover:bg-[#3561e0] transition-colors"
               >
-                📞 (800) 000-0000
+                (800) 000-0000
               </a>
               <Link
                 href="/contact"

@@ -4,17 +4,17 @@ import Link from "next/link";
 
 const values = [
   {
-    icon: "🤝",
+    icon: "",
     title: "Transparency",
     body: "No hidden fees. No bait-and-switch rates. What you see is what you pay. We believe you can't build trust on fine print.",
   },
   {
-    icon: "💪",
+    icon: "",
     title: "Driver First",
     body: "Every decision we make starts with the question: does this help our drivers earn more? If the answer is no, we don't do it.",
   },
   {
-    icon: "🔧",
+    icon: "",
     title: "Maintained & Ready",
     body: "Every vehicle is fully inspected and serviced before your rental. We don't send you out in a car we wouldn't drive ourselves.",
   },
