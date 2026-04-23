@@ -35,7 +35,7 @@ export default async function MaintenancePage() {
   const overdue = (records as Record<string,unknown>[]).filter((r) => String(r.status ?? "") === "overdue").length;
 
   return (
-    <div className="p-8 max-w-[1400px]">
+    <div className="p-4 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

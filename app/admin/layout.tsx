@@ -1,8 +1,9 @@
 /**
  * app/admin/layout.tsx
  *
- * Persistent admin layout — sidebar nav + main content area.
- * All /admin/* routes render inside this layout.
+ * Admin layout — responsive sidebar + main content.
+ * Mobile: top bar + slide-in sidebar, no left offset
+ * Desktop: fixed 224px sidebar, content offset by sidebar width
  */
 
 import type { Metadata } from "next";
@@ -15,10 +16,11 @@ export const metadata: Metadata = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#0A0A0F] flex">
+    <div className="min-h-screen bg-[#0A0A0F]">
       <AdminSidebar />
-      {/* Main content — offset by sidebar width */}
-      <main className="flex-1 ml-56 min-h-screen overflow-x-hidden">
+      {/* Mobile: padding-top for the fixed top bar */}
+      {/* Desktop: margin-left for the fixed sidebar */}
+      <main className="pt-14 lg:pt-0 lg:ml-56 min-h-screen overflow-x-hidden">
         {children}
       </main>
     </div>
