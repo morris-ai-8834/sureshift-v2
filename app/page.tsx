@@ -118,7 +118,7 @@ export default function HomePage() {
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                href="/fleet"
+                href="/locations"
                 className="inline-flex items-center gap-2 px-7 py-4 bg-[#2952CC] text-white font-semibold rounded-xl hover:bg-[#1e3fa8] transition-all duration-200 shadow-lg shadow-[#2952CC]/25 hover:shadow-[#2952CC]/40 text-sm"
               >
                 View Available Cars
@@ -164,7 +164,7 @@ export default function HomePage() {
               <p className="text-[#2952CC] text-sm font-semibold uppercase tracking-widest mb-2">Available Now</p>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Featured Fleet</h2>
             </div>
-            <Link href="/fleet" className="hidden sm:flex items-center gap-1.5 text-sm text-[#2952CC] font-semibold hover:gap-3 transition-all duration-200">
+            <Link href="/locations" className="hidden sm:flex items-center gap-1.5 text-sm text-[#2952CC] font-semibold hover:gap-3 transition-all duration-200">
               View all cars
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </Link>
@@ -178,7 +178,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 text-center sm:hidden">
-            <Link href="/fleet" className="inline-flex items-center gap-2 text-sm text-[#2952CC] font-semibold">
+            <Link href="/locations" className="inline-flex items-center gap-2 text-sm text-[#2952CC] font-semibold">
               View all available cars →
             </Link>
           </div>
@@ -254,7 +254,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
             <Link
-              href="/fleet"
+              href="/locations"
               className="px-8 py-4 bg-[#2952CC] text-white font-semibold rounded-xl hover:bg-[#1e3fa8] transition-all duration-200 text-sm text-center shadow-lg shadow-[#2952CC]/25"
             >
               View Available Cars

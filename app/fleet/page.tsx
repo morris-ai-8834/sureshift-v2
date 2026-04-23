@@ -21,6 +21,14 @@ import Footer from "../components/Footer";
 import { getDB } from "@/lib/db";
 
 // ============================================
+// CITY CONFIG
+// ============================================
+const cityConfig: Record<string, { label: string; emoji: string }> = {
+  houston: { label: "Houston", emoji: "🤠" },
+  dallas: { label: "Dallas", emoji: "🌆" },
+};
+
+// ============================================
 // CAR IMAGE MAP — slug to photo file
 // ============================================
 const carImages: Record<string, string> = {
@@ -144,7 +152,15 @@ function VehicleCard({ v }: { v: Record<string, unknown> }) {
 // ============================================
 // PAGE — server rendered
 // ============================================
-export default async function FleetPage() {
+export default async function FleetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ city?: string }>;
+}) {
+  const { city } = await searchParams;
+  const cityKey = city?.toLowerCase() ?? "houston";
+  const cityInfo = cityConfig[cityKey] ?? cityConfig.houston;
+
   let vehicles: Record<string, unknown>[] = [];
 
   try {
@@ -153,6 +169,7 @@ export default async function FleetPage() {
       SELECT *
       FROM vehicles
       WHERE is_bookable = TRUE
+        AND LOWER(location_city) = ${cityKey}
       ORDER BY daily_rate ASC, vehicle_code ASC
     `;
     vehicles = rows as Record<string, unknown>[];
@@ -166,9 +183,26 @@ export default async function FleetPage() {
 
       {/* Page header */}
       <div className="pt-24 pb-6 px-5 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-black text-gray-900 mb-1">Available Fleet</h1>
+        {/* City switcher */}
+        <div className="flex items-center gap-3 mb-6">
+          <Link href="/fleet?city=houston" className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+            cityKey === "houston" ? "bg-[#2952CC] text-white shadow-sm" : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"
+          }`}>
+            Houston
+          </Link>
+          <Link href="/fleet?city=dallas" className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+            cityKey === "dallas" ? "bg-[#2952CC] text-white shadow-sm" : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"
+          }`}>
+            Dallas
+          </Link>
+          <Link href="/locations" className="ml-auto text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            ← Change city
+          </Link>
+        </div>
+
+        <h1 className="text-3xl font-black text-gray-900 mb-1">{cityInfo.label} Fleet</h1>
         <p className="text-gray-500 text-sm">
-          Houston, TX · All vehicles are gig-work eligible
+          {cityInfo.label}, TX · All vehicles are gig-work eligible
         </p>
       </div>
 
