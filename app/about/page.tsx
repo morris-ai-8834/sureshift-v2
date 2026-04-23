@@ -82,7 +82,7 @@ export default function AboutPage() {
               workers actually need.
             </p>
             <p>
-              Today, we're proud to serve Houston's hardworking community of drivers, commuters,
+              Today, we're proud to serve Houston and Dallas's hardworking communities of drivers, commuters,
               and hustle-getters. Every vehicle in our fleet is well-maintained, inspected, and
               ready to work as hard as you do.
             </p>
@@ -145,7 +145,7 @@ export default function AboutPage() {
               { value: "200+", label: "Rentals Completed" },
               { value: "6", label: "Vehicles in Fleet" },
               { value: "4.9★", label: "Average Rating" },
-              { value: "Houston", label: "Based & Operated" },
+              { value: "Houston & Dallas", label: "Serving Texas" },
             ].map((stat) => (
               <div key={stat.label}>
                 <div className="text-3xl sm:text-4xl font-black text-white mb-1">{stat.value}</div>

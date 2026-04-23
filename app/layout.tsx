@@ -11,8 +11,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SureShift Rentals — Reliable Cars for the Hustle",
   description:
-    "Houston's go-to car rental for gig workers and commuters. Flexible weekly rentals, no credit check required. Uber/Lyft approved vehicles available.",
-  keywords: "car rental Houston, gig worker car rental, Uber Lyft rental, weekly car rental Houston TX",
+    "Houston & Dallas go-to car rental for gig workers and commuters. Flexible weekly rentals, no credit check required. Uber/Lyft approved vehicles available.",
+  keywords: "car rental Houston Dallas Texas, gig worker car rental, Uber Lyft rental, weekly car rental",
 };
 
 export default function RootLayout({

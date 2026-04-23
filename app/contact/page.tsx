@@ -36,7 +36,7 @@ export default function ContactPage() {
             Contact SureShift
           </h1>
           <p className="text-[#7A8B9A] text-lg max-w-xl">
-            We're a local Houston team — real people, real answers. Reach out however is most
+            We're a local Texas team serving Houston & Dallas — real people, real answers. Reach out however is most
             convenient for you.
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-xs text-[#7A8B9A] uppercase tracking-wider mb-1">Location</p>
-                    <p className="text-white font-semibold">Houston, TX</p>
+                    <p className="text-white font-semibold">Houston &amp; Dallas, TX</p>
                     <p className="text-[#7A8B9A] text-xs mt-0.5">Pickup address shared after booking</p>
                   </div>
                 </div>

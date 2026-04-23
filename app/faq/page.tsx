@@ -81,7 +81,7 @@ const faqs = [
     category: "Rental Terms",
     question: "How does the return process work?",
     answer:
-      "Return the vehicle to our Houston location at the agreed time, with a full tank of gas (or we deduct the cost). We'll do a walkthrough inspection together and process your deposit refund on the spot if everything checks out.",
+      "Return the vehicle to our Houston or Dallas location at the agreed time, with a full tank of gas (or we deduct the cost). We'll do a walkthrough inspection together and process your deposit refund on the spot if everything checks out.",
   },
   {
     id: "under21",

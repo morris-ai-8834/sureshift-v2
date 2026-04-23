@@ -26,11 +26,11 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-white/40 text-sm leading-relaxed max-w-xs">
-              Reliable weekly rentals for Houston's gig workers and commuters. No credit check. Drive tomorrow.
+              Reliable weekly rentals for Houston & Dallas gig workers and commuters. No credit check. Drive tomorrow.
             </p>
             <div className="mt-6 flex items-center gap-2 text-white/40 text-sm">
               <span>📍</span>
-              <span>Houston, TX</span>
+              <span>Houston &amp; Dallas, TX</span>
             </div>
           </div>
 
@@ -82,7 +82,7 @@ export default function Footer() {
             © 2026 SureShift Rentals. All rights reserved.
           </p>
           <p className="text-white/25 text-xs">
-            Houston, TX · Reliable Cars for the Hustle.
+            Houston & Dallas, TX · Reliable Cars for the Hustle.
           </p>
         </div>
       </div>

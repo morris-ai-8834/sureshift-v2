@@ -41,7 +41,7 @@ const valueProps = [
   {
     icon: "📍",
     title: "Houston Local",
-    body: "We're a real Houston team — not a faceless platform. Call us directly.",
+    body: "We're a real Texas team — not a faceless platform. Call us directly.",
   },
   {
     icon: "🔧",
@@ -100,7 +100,7 @@ export default function HomePage() {
             {/* Location pill */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/60 text-xs font-medium tracking-wide uppercase">Houston, TX · Available Now</span>
+              <span className="text-white/60 text-xs font-medium tracking-wide uppercase">Houston Houston, TX · Available Now Dallas, TX · Now Available</span>
             </div>
 
             {/* Main headline */}
@@ -112,7 +112,7 @@ export default function HomePage() {
 
             {/* Subheadline */}
             <p className="text-lg text-white/50 max-w-xl leading-relaxed mb-10 font-light">
-              Weekly rentals built for Houston's gig workers and commuters. No credit check. Uber & Lyft eligible. Drive as early as tomorrow.
+              Weekly rentals built for Houston & Dallas gig workers and commuters. No credit check. Uber & Lyft eligible. Drive as early as tomorrow.
             </p>
 
             {/* CTAs */}
