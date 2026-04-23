@@ -319,12 +319,92 @@ export function ThumbsUp({ className }: { className?: string }) {
   );
 }
 
+// Home / Dashboard
+export function Home({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+      <path d="M9 21V12h6v9" />
+    </svg>
+  );
+}
+
+// Alert / Warning
+export function Alert({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M10.3 3.5l-8 14A2 2 0 004 21h16a2 2 0 001.7-3l-8-14a2 2 0 00-3.4 0z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  );
+}
+
+// Trending Up
+export function TrendUp({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M22 7l-8 8-4-4-6 6" />
+      <path d="M16 7h6v6" />
+    </svg>
+  );
+}
+
+// Trending Down
+export function TrendDown({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M22 17l-8-8-4 4-6-6" />
+      <path d="M16 17h6v-6" />
+    </svg>
+  );
+}
+
+// Chart Bar
+export function ChartBar({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M18 20V10M12 20V4M6 20v-6" />
+    </svg>
+  );
+}
+
+// Check Circle
+export function CheckCircle({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+
+// X / Close
+export function X({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+// Dots / More
+export function MoreDots({ className }: { className?: string }) {
+  return (
+    <svg {...defaultProps} viewBox="0 0 24 24" className={className}>
+      <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 // Export all as namespace
 const Icons = {
   Car, Shield, Check, Clock, Pin, Calendar, Phone, Mail, Wrench,
   Lightning, Leaf, Person, CreditCard, Star, Document, Sparkle,
   Support, Speedometer, Lock, Info, ArrowRight, ArrowLeft,
   Share, Heart, City, Fuel, Settings, ThumbsUp,
+  Home, Alert, TrendUp, TrendDown, ChartBar, CheckCircle, X, MoreDots,
 };
 
 export default Icons;

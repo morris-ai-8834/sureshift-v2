@@ -3,21 +3,7 @@
  *
  * GET /api/admin/dashboard
  *
- * Returns all statistics and data needed to render the admin dashboard.
- * Runs multiple focused queries and assembles them into a single bundle
- * so the dashboard page makes one request instead of many.
- *
- * Returns:
- *   - totalVehicles       — count of all vehicles in fleet
- *   - availableVehicles   — count with status = available or limited_availability
- *   - reservedVehicles    — count with status = reserved
- *   - activeRentals       — count of reservations with status = active
- *   - pendingDeposits     — count of reservations awaiting deposit payment
- *   - pendingSignatures   — count of reservations with unsigned agreements
- *   - upcomingPickups     — reservations in the next 48 hours
- *   - recentReservations  — last 10 reservations created
- *
- * Response: DashboardStats
+ * Returns all stats needed to render the Phase 1 executive dashboard.
  */
 
 import { NextResponse } from "next/server";
@@ -32,78 +18,82 @@ import {
 import { getErrorMessage } from "@/lib/helpers";
 import type { DashboardStats } from "@/lib/types";
 
-// ============================================
-// GET /api/admin/dashboard
-// ============================================
-
 export async function GET(): Promise<NextResponse> {
   const sql = getDB();
   try {
-    // ============================================
-    // SECTION: Fleet counts
-    // Quick aggregate counts on the vehicles table.
-    // ============================================
+    // Fleet counts
+    const [totalRes, availRes, reservedRes, maintRes] = await Promise.all([
+      sql`SELECT COUNT(*) AS count FROM vehicles`,
+      sql`SELECT COUNT(*) AS count FROM vehicles WHERE status IN (${VehicleStatus.AVAILABLE}, ${VehicleStatus.LIMITED_AVAILABILITY})`,
+      sql`SELECT COUNT(*) AS count FROM vehicles WHERE status = ${VehicleStatus.RESERVED}`,
+      sql`SELECT COUNT(*) AS count FROM vehicles WHERE status = ${VehicleStatus.MAINTENANCE}`,
+    ]);
 
-    // Total vehicles ever added to the fleet (regardless of status)
-    const totalVehiclesResult = await sql`
-      SELECT COUNT(*) AS count FROM vehicles
+    const totalVehicles = parseInt(totalRes[0].count, 10);
+    const availableVehicles = parseInt(availRes[0].count, 10);
+    const reservedVehicles = parseInt(reservedRes[0].count, 10);
+    const maintenanceVehicles = parseInt(maintRes[0].count, 10);
+
+    // Reservation counts
+    const [activeRes, depositRes, sigRes, pendingDepositRes] = await Promise.all([
+      sql`SELECT COUNT(*) AS count FROM reservations WHERE reservation_status = ${ReservationStatus.ACTIVE}`,
+      sql`SELECT COUNT(*) AS count FROM reservations WHERE deposit_status = ${DepositStatus.NOT_PAID} AND reservation_status NOT IN (${ReservationStatus.CANCELLED}, ${ReservationStatus.COMPLETED})`,
+      sql`SELECT COUNT(*) AS count FROM reservations WHERE signature_status != ${SignatureStatus.SIGNED} AND reservation_status IN (${ReservationStatus.DEPOSIT_PAID}, ${ReservationStatus.AGREEMENT_SENT})`,
+      sql`SELECT COUNT(*) AS count FROM reservations WHERE deposit_status = ${DepositStatus.NOT_PAID} AND reservation_status NOT IN (${ReservationStatus.CANCELLED}, ${ReservationStatus.COMPLETED})`,
+    ]);
+
+    const activeRentals = parseInt(activeRes[0].count, 10);
+    const pendingDeposits = parseInt(depositRes[0].count, 10);
+    const pendingSignatures = parseInt(sigRes[0].count, 10);
+
+    // Revenue this month
+    const revenueRes = await sql`
+      SELECT COALESCE(SUM(estimated_rental_subtotal), 0) AS revenue
+      FROM reservations
+      WHERE reservation_status IN (${ReservationStatus.ACTIVE}, ${ReservationStatus.COMPLETED}, ${ReservationStatus.CONFIRMED})
+        AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())
     `;
-    const totalVehicles = parseInt(totalVehiclesResult[0].count, 10);
+    const revenueThisMonth = parseFloat(revenueRes[0].revenue) || 0;
 
-    // Available = ready to book right now
-    const availableVehiclesResult = await sql`
-      SELECT COUNT(*) AS count FROM vehicles
-      WHERE status IN (
-        ${VehicleStatus.AVAILABLE},
-        ${VehicleStatus.LIMITED_AVAILABILITY}
-      )
+    // Maintenance due soon (next 14 days) or overdue
+    const maintDueRes = await sql`
+      SELECT COUNT(*) AS count FROM maintenance_records
+      WHERE status IN ('pending', 'overdue')
+        AND (due_date IS NULL OR due_date <= NOW() + INTERVAL '14 days')
     `;
-    const availableVehicles = parseInt(availableVehiclesResult[0].count, 10);
+    const maintenanceDueSoon = parseInt(maintDueRes[0].count, 10);
 
-    // Reserved = currently out on rental or confirmed and waiting for pickup
-    const reservedVehiclesResult = await sql`
-      SELECT COUNT(*) AS count FROM vehicles
-      WHERE status = ${VehicleStatus.RESERVED}
+    // Fleet utilization
+    const bookableVehicles = totalVehicles - maintenanceVehicles;
+    const fleetUtilization = bookableVehicles > 0
+      ? Math.round((activeRentals / bookableVehicles) * 100)
+      : 0;
+
+    // Monthly revenue — last 6 months
+    const monthlyRevenueRes = await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', created_at), 'Mon') AS month,
+        COALESCE(SUM(estimated_rental_subtotal), 0) AS revenue
+      FROM reservations
+      WHERE reservation_status IN (${ReservationStatus.ACTIVE}, ${ReservationStatus.COMPLETED}, ${ReservationStatus.CONFIRMED})
+        AND created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY DATE_TRUNC('month', created_at) ASC
     `;
-    const reservedVehicles = parseInt(reservedVehiclesResult[0].count, 10);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const monthlyRevenue = monthlyRevenueRes.map((r: any) => ({
+      month: r.month,
+      revenue: parseFloat(r.revenue) || 0,
+    }));
 
-    // ============================================
-    // SECTION: Reservation counts
-    // Status-filtered counts for the action items panel.
-    // ============================================
+    // Fleet status breakdown for donut
+    const fleetStatusBreakdown = {
+      available: availableVehicles,
+      active: reservedVehicles,
+      maintenance: maintenanceVehicles,
+    };
 
-    // Active rentals: car is currently out with a customer
-    const activeRentalsResult = await sql`
-      SELECT COUNT(*) AS count FROM reservations
-      WHERE reservation_status = ${ReservationStatus.ACTIVE}
-    `;
-    const activeRentals = parseInt(activeRentalsResult[0].count, 10);
-
-    // Pending deposits: reservation created but customer hasn't paid yet
-    const pendingDepositsResult = await sql`
-      SELECT COUNT(*) AS count FROM reservations
-      WHERE reservation_status = ${ReservationStatus.AWAITING_DEPOSIT}
-        AND deposit_status = ${DepositStatus.NOT_PAID}
-    `;
-    const pendingDeposits = parseInt(pendingDepositsResult[0].count, 10);
-
-    // Pending signatures: agreement sent but not yet signed
-    // (awaiting_deposit reservations with unsigned agreements)
-    const pendingSignaturesResult = await sql`
-      SELECT COUNT(*) AS count FROM reservations
-      WHERE signature_status != ${SignatureStatus.SIGNED}
-        AND reservation_status IN (
-          ${ReservationStatus.DEPOSIT_PAID},
-          ${ReservationStatus.AGREEMENT_SENT}
-        )
-    `;
-    const pendingSignatures = parseInt(pendingSignaturesResult[0].count, 10);
-
-    // ============================================
-    // SECTION: Upcoming pickups
-    // Reservations with pickup in the next UPCOMING_PICKUP_WINDOW_HOURS hours.
-    // These need admin attention — confirm vehicle is prepped, customer is ready.
-    // ============================================
+    // Upcoming pickups (next 48 hours)
     const upcomingPickups = await sql`
       SELECT
         r.*,
@@ -119,19 +109,13 @@ export async function GET(): Promise<NextResponse> {
       FROM reservations r
       JOIN customers c ON c.id = r.customer_id
       JOIN vehicles  v ON v.id = r.vehicle_id
-      WHERE r.reservation_status IN (
-          ${ReservationStatus.CONFIRMED},
-          ${ReservationStatus.DEPOSIT_PAID}
-        )
+      WHERE r.reservation_status IN (${ReservationStatus.CONFIRMED}, ${ReservationStatus.DEPOSIT_PAID})
         AND r.pickup_datetime >= NOW()
         AND r.pickup_datetime <= NOW() + INTERVAL '${BusinessRules.UPCOMING_PICKUP_WINDOW_HOURS} hours'
       ORDER BY r.pickup_datetime ASC
     `;
 
-    // ============================================
-    // SECTION: Recent reservations
-    // Last N reservations across all statuses — the admin's activity feed.
-    // ============================================
+    // Recent reservations
     const recentReservations = await sql`
       SELECT
         r.*,
@@ -151,9 +135,6 @@ export async function GET(): Promise<NextResponse> {
       LIMIT ${BusinessRules.DASHBOARD_RECENT_RESERVATIONS_LIMIT}
     `;
 
-    // ============================================
-    // SECTION: Assemble and return response
-    // ============================================
     const stats: DashboardStats = {
       totalVehicles,
       availableVehicles,
@@ -161,13 +142,18 @@ export async function GET(): Promise<NextResponse> {
       activeRentals,
       pendingDeposits,
       pendingSignatures,
+      revenueThisMonth,
+      maintenanceDueSoon,
+      fleetUtilization,
       upcomingPickups,
       recentReservations,
+      monthlyRevenue,
+      fleetStatusBreakdown,
     };
 
     return NextResponse.json(stats);
   } catch (err) {
-    console.error("[GET /api/admin/dashboard] Unexpected error:", err);
+    console.error("[GET /api/admin/dashboard]", err);
     return NextResponse.json(
       { error: "Failed to load dashboard data", detail: getErrorMessage(err) },
       { status: 500 }

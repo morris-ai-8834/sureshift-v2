@@ -331,6 +331,74 @@ export interface PortalData {
   statusHistory: any[];
 }
 
+/** A maintenance record row */
+export interface MaintenanceRecordRow {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  due_mileage: number | null;
+  due_date: string | null;
+  completed_date: string | null;
+  completed_mileage: number | null;
+  cost: string | null;
+  vendor: string | null;
+  notes: string | null;
+  status: string;
+  invoice_url: string | null;
+  created_at: Date;
+  updated_at: Date;
+  // joined fields
+  vehicle_code?: string;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
+}
+
+/** A vehicle expense row */
+export interface VehicleExpenseRow {
+  id: string;
+  vehicle_id: string;
+  date: string;
+  category: string;
+  vendor: string | null;
+  amount: string;
+  payment_method: string | null;
+  renter_caused: boolean;
+  reimbursable: boolean;
+  notes: string | null;
+  attachment_url: string | null;
+  created_at: Date;
+}
+
+/** A trip row */
+export interface TripRow {
+  id: string;
+  vehicle_id: string;
+  source: string;
+  trip_start: Date | null;
+  trip_end: Date | null;
+  start_location: string | null;
+  end_location: string | null;
+  miles: string | null;
+  duration_minutes: number | null;
+  notes: string | null;
+  created_at: Date;
+}
+
+/** Enhanced vehicle row with fleet management fields */
+export interface VehicleFleetRow extends VehicleRow {
+  vin: string | null;
+  plate: string | null;
+  color: string | null;
+  purchase_date: string | null;
+  purchase_price: string | null;
+  current_odometer: number | null;
+  tracker_device_id: string | null;
+  insurance_policy: string | null;
+  registration_due: string | null;
+  inspection_due: string | null;
+}
+
 /** Admin dashboard stats */
 export interface DashboardStats {
   totalVehicles: number;
@@ -339,8 +407,13 @@ export interface DashboardStats {
   activeRentals: number;
   pendingDeposits: number;
   pendingSignatures: number;
+  revenueThisMonth: number;
+  maintenanceDueSoon: number;
+  fleetUtilization: number;
   upcomingPickups: any[];
   recentReservations: any[];
+  monthlyRevenue: Array<{ month: string; revenue: number }>;
+  fleetStatusBreakdown: { available: number; active: number; maintenance: number };
 }
 
 // ============================================
