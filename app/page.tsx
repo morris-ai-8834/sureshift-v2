@@ -10,12 +10,10 @@
  */
 
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import VehicleCard from "./components/VehicleCard";
-import vehicles from "./data/vehicles";
-
-const featuredVehicles = vehicles.filter((v) => v.status !== "Reserved").slice(0, 3);
+import { getDB } from "@/lib/db";
 
 const valueProps = [
   {
@@ -73,7 +71,18 @@ const steps = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Fetch 3 featured vehicles from DB
+  let featuredVehicles: Record<string, unknown>[] = [];
+  try {
+    const sql = getDB();
+    const rows = await sql`
+      SELECT * FROM vehicles
+      WHERE is_bookable = TRUE AND status IN ('available', 'limited_availability')
+      ORDER BY featured DESC, daily_rate ASC LIMIT 3
+    `;
+    featuredVehicles = rows as Record<string, unknown>[];
+  } catch { featuredVehicles = []; }
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -100,7 +109,7 @@ export default function HomePage() {
             {/* Location pill */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/60 text-xs font-medium tracking-wide uppercase">Houston Houston, TX · Available Now Dallas, TX · Now Available</span>
+              <span className="text-white/60 text-xs font-medium tracking-wide uppercase">Houston &amp; Dallas, TX · Now Available</span>
             </div>
 
             {/* Main headline */}
@@ -170,11 +179,35 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Cards */}
+          {/* Cards — DB-driven, links by slug */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredVehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
+            {featuredVehicles.map((v) => {
+              const weekly = v.weekly_rate ? Number(v.weekly_rate) : Math.round(Number(v.daily_rate) * 7);
+              const carImages: Record<string, string> = { toyota: '/cars/toyota-camry.png', nissan: '/cars/nissan-altima.png', ford: '/cars/ford-fusion.png' };
+              const imgSrc = carImages[String(v.make).toLowerCase()] ?? carImages.toyota;
+              return (
+                <div key={String(v.id)} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:border-gray-200 transition-all duration-300">
+                  <div className="pt-5 px-5 pb-2">
+                    <div className="flex justify-end mb-2">
+                      <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full">Available</span>
+                    </div>
+                    <h3 className="text-center text-base font-black text-gray-900 mb-1">{String(v.year)} {String(v.make)} {String(v.model)}</h3>
+                    <div className="flex items-center justify-center h-36">
+                      <Image src={imgSrc} alt={String(v.headline_name)} width={280} height={160} className="object-contain w-full h-full drop-shadow-md" />
+                    </div>
+                    <div className="text-center py-2">
+                      <span className="text-lg font-bold text-gray-900">${weekly}</span>
+                      <span className="text-sm text-gray-400"> / week</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-100 py-3 px-5 text-center">
+                    <Link href={`/fleet/${String(v.slug)}`} className="text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-[#2952CC] transition-colors">
+                      Select model
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-10 text-center sm:hidden">
