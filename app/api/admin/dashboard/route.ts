@@ -111,7 +111,7 @@ export async function GET(): Promise<NextResponse> {
       JOIN vehicles  v ON v.id = r.vehicle_id
       WHERE r.reservation_status IN (${ReservationStatus.CONFIRMED}, ${ReservationStatus.DEPOSIT_PAID})
         AND r.pickup_datetime >= NOW()
-        AND r.pickup_datetime <= NOW() + INTERVAL '${BusinessRules.UPCOMING_PICKUP_WINDOW_HOURS} hours'
+        AND r.pickup_datetime <= NOW() + INTERVAL '48 hours'
       ORDER BY r.pickup_datetime ASC
     `;
 
@@ -132,7 +132,7 @@ export async function GET(): Promise<NextResponse> {
       JOIN customers c ON c.id = r.customer_id
       JOIN vehicles  v ON v.id = r.vehicle_id
       ORDER BY r.created_at DESC
-      LIMIT ${BusinessRules.DASHBOARD_RECENT_RESERVATIONS_LIMIT}
+      LIMIT 10
     `;
 
     const stats: DashboardStats = {
