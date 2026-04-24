@@ -99,8 +99,16 @@ async function getDashboardData() {
       monthlyRevenue: monthlyRevenue as Record<string, unknown>[],
     };
   } catch (err) {
-    console.error("[AdminDashboard] DB error:", err);
-    return null;
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[AdminDashboard] DB error:", msg);
+    // Return partial data with zeros instead of null so page still renders
+    return {
+      totalVehicles: 0, available: 0, activeRentals: 0, maintenance: 0,
+      utilization: 0, monthRevenue: 0, totalReservations: 0,
+      pendingDeposits: 0, pendingSigs: 0, maintenanceDueSoon: 0,
+      maintenanceOverdue: 0, recentReservations: [], monthlyRevenue: [],
+      _error: msg,
+    };
   }
 }
 
@@ -165,8 +173,18 @@ export default async function AdminDashboardPage() {
     );
   }
 
+  // Show error banner but still render dashboard with zeros
+  const hasError = '_error' in data;
+
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+
+      {/* Error banner if DB had issues */}
+      {hasError && (
+        <div className="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-400 text-xs">
+          DB warning: {(data as Record<string, unknown>)._error as string}. Showing cached/zero values.
+        </div>
+      )}
 
       {/* Header */}
       <div className="mb-8">
