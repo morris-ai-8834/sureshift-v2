@@ -1,225 +1,179 @@
 /**
  * app/admin/reservations/page.tsx
  *
- * Admin reservations management page at /admin/reservations.
- *
- * Fetches all reservations from /api/admin/reservations with optional
- * status filtering via query params. Shows a sortable table with
- * customer, vehicle, date, and status info.
- *
- * This is a server component — status filter from the URL is applied
- * server-side for a fast, accessible filtered view.
+ * Admin reservations management — /admin/reservations
+ * Server-rendered directly from DB. No public Navbar — uses admin layout.
  */
 
 import Link from "next/link";
-import Navbar from "../../components/Navbar";
-import type { ReservationWithDetails } from "@/lib/types";
-import { ReservationStatus } from "@/lib/constants";
-import { formatDollars, formatDatetime } from "@/lib/helpers";
+import { getDB } from "@/lib/db";
 
-// ============================================
-// DATA FETCHING
-// ============================================
+export const dynamic = "force-dynamic";
 
-async function getReservations(statusFilter?: string): Promise<ReservationWithDetails[]> {
+// ─── Status config ────────────────────────────────────────────────
+
+const STATUS_TABS = [
+  { label: "All", value: "" },
+  { label: "Awaiting Deposit", value: "awaiting_deposit" },
+  { label: "Deposit Paid", value: "deposit_paid" },
+  { label: "Agreement Sent", value: "agreement_sent" },
+  { label: "Confirmed", value: "confirmed" },
+  { label: "Active", value: "active" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
+const STATUS_CHIP: Record<string, string> = {
+  awaiting_deposit: "bg-amber-500/15 text-amber-400 border-amber-500/25",
+  deposit_paid: "bg-blue-500/15 text-blue-400 border-blue-500/25",
+  agreement_sent: "bg-purple-500/15 text-purple-400 border-purple-500/25",
+  confirmed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
+  active: "bg-[#2952CC]/25 text-[#6b9fff] border-[#2952CC]/35",
+  completed: "bg-gray-500/15 text-gray-400 border-gray-500/25",
+  cancelled: "bg-red-500/15 text-red-400 border-red-500/25",
+  expired: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+};
+
+// ─── Data fetching ────────────────────────────────────────────────
+
+async function getReservations(statusFilter?: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const url = statusFilter
-      ? `${baseUrl}/api/admin/reservations?status=${statusFilter}`
-      : `${baseUrl}/api/admin/reservations`;
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
+    const sql = getDB();
+    const rows = statusFilter
+      ? await sql`
+          SELECT r.*, c.first_name, c.last_name, c.email, c.phone,
+                 v.year, v.make, v.model, v.slug
+          FROM reservations r
+          LEFT JOIN customers c ON c.id = r.customer_id
+          LEFT JOIN vehicles v ON v.id = r.vehicle_id
+          WHERE r.reservation_status = ${statusFilter}
+          ORDER BY r.created_at DESC`
+      : await sql`
+          SELECT r.*, c.first_name, c.last_name, c.email, c.phone,
+                 v.year, v.make, v.model, v.slug
+          FROM reservations r
+          LEFT JOIN customers c ON c.id = r.customer_id
+          LEFT JOIN vehicles v ON v.id = r.vehicle_id
+          ORDER BY r.created_at DESC`;
+    return rows as Record<string, unknown>[];
+  } catch (err) {
+    console.error("[AdminReservations]", err);
     return [];
   }
 }
 
-// ============================================
-// STATUS TABS
-// The tab bar allows quick filtering by reservation status.
-// ============================================
+// ─── Page ────────────────────────────────────────────────────────
 
-const STATUS_TABS = [
-  { label: "All", value: "" },
-  { label: "Awaiting Deposit", value: ReservationStatus.AWAITING_DEPOSIT },
-  { label: "Deposit Paid", value: ReservationStatus.DEPOSIT_PAID },
-  { label: "Agreement Sent", value: ReservationStatus.AGREEMENT_SENT },
-  { label: "Confirmed", value: ReservationStatus.CONFIRMED },
-  { label: "Active", value: ReservationStatus.ACTIVE },
-  { label: "Completed", value: ReservationStatus.COMPLETED },
-  { label: "Cancelled", value: ReservationStatus.CANCELLED },
-];
-
-// ============================================
-// HELPER: Status pill
-// ============================================
-
-function StatusPill({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    [ReservationStatus.AWAITING_DEPOSIT]: "bg-amber-500/15 text-amber-400",
-    [ReservationStatus.DEPOSIT_PAID]: "bg-blue-500/15 text-blue-400",
-    [ReservationStatus.AGREEMENT_SENT]: "bg-violet-500/15 text-violet-400",
-    [ReservationStatus.CONFIRMED]: "bg-emerald-500/15 text-emerald-400",
-    [ReservationStatus.ACTIVE]: "bg-green-500/15 text-green-400",
-    [ReservationStatus.COMPLETED]: "bg-gray-500/15 text-gray-400",
-    [ReservationStatus.CANCELLED]: "bg-red-500/15 text-red-400",
-    [ReservationStatus.NO_SHOW]: "bg-rose-500/15 text-rose-400",
-  };
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${colors[status] ?? "bg-gray-800 text-gray-400"}`}>
-      {status.replace(/_/g, " ")}
-    </span>
-  );
-}
-
-// ============================================
-// PAGE COMPONENT
-// ============================================
-
-interface PageProps {
+export default async function AdminReservationsPage({
+  searchParams,
+}: {
   searchParams: Promise<{ status?: string }>;
-}
-
-export default async function AdminReservationsPage({ searchParams }: PageProps) {
+}) {
   const { status } = await searchParams;
-  const statusFilter = status ?? "";
-  const reservations = await getReservations(statusFilter || undefined);
+  const reservations = await getReservations(status);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D]">
-      <Navbar />
+    <div className="p-4 lg:p-8 max-w-7xl mx-auto">
 
-      <div className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-black text-white">Reservations</h1>
-              <span className="px-2.5 py-1 bg-[#2952CC]/20 text-[#2952CC] border border-[#2952CC]/30 rounded-lg text-xs font-bold uppercase tracking-wider">
-                Admin
-              </span>
-            </div>
-            <p className="text-[#7A8B9A] text-sm">
-              {reservations.length} reservation{reservations.length !== 1 ? "s" : ""}
-              {statusFilter && ` · filtered by: ${statusFilter.replace(/_/g, " ")}`}
-            </p>
-          </div>
-          <Link href="/admin"
-            className="px-4 py-2 bg-gray-900 border border-gray-800 text-[#7A8B9A] rounded-xl text-sm font-medium hover:text-white hover:border-gray-600 transition-colors"
-          >
-            ← Dashboard
-          </Link>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-black text-white">Reservations</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            {reservations.length} reservation{reservations.length !== 1 ? "s" : ""}
+            {status ? ` · filtered by: ${status.replace(/_/g, " ")}` : ""}
+          </p>
         </div>
+      </div>
 
-        {/* Status filter tabs */}
-        <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-1">
-          {STATUS_TABS.map((tab) => (
+      {/* Status filter tabs — horizontal scroll on mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+        {STATUS_TABS.map((tab) => {
+          const active = (status ?? "") === tab.value;
+          const href = tab.value ? `/admin/reservations?status=${tab.value}` : "/admin/reservations";
+          return (
             <Link
               key={tab.value}
-              href={tab.value ? `/admin/reservations?status=${tab.value}` : "/admin/reservations"}
-              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                statusFilter === tab.value
+              href={href}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
+                active
                   ? "bg-[#2952CC] text-white"
-                  : "bg-gray-900 text-[#7A8B9A] border border-gray-800 hover:border-gray-600 hover:text-white"
+                  : "bg-[#111827] text-gray-400 border border-[#1f2937] hover:text-white hover:border-gray-600"
               }`}
             >
               {tab.label}
             </Link>
-          ))}
-        </div>
-
-        {/* Reservations table */}
-        {reservations.length === 0 ? (
-          <div className="text-center py-24 bg-gray-900 border border-gray-800 rounded-2xl">
-            <div className="text-4xl mb-3"></div>
-            <p className="text-white font-semibold mb-1">No reservations found</p>
-            <p className="text-[#7A8B9A] text-sm">
-              {statusFilter ? "No reservations with this status." : "No reservations have been created yet."}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium">Code</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium">Customer</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium hidden md:table-cell">Vehicle</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium hidden lg:table-cell">Pickup</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium hidden lg:table-cell">Return</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium hidden sm:table-cell">Total</th>
-                    <th className="text-left px-4 py-3 text-[#7A8B9A] font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {reservations.map((res) => (
-                    <tr key={res.id} className="hover:bg-gray-800/40 transition-colors">
-                      <td className="px-4 py-3.5">
-                        <span className="font-mono text-white text-xs bg-gray-800 px-2 py-1 rounded">
-                          {res.reservation_code}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="text-white font-medium">
-                          {res.customer_first_name} {res.customer_last_name}
-                        </p>
-                        <p className="text-[#7A8B9A] text-xs">{res.customer_phone}</p>
-                      </td>
-                      <td className="px-4 py-3.5 hidden md:table-cell">
-                        <p className="text-[#7A8B9A] text-xs">
-                          {res.vehicle_year} {res.vehicle_make} {res.vehicle_model}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5 hidden lg:table-cell">
-                        <p className="text-[#7A8B9A] text-xs">
-                          {formatDatetime(new Date(res.pickup_datetime))}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5 hidden lg:table-cell">
-                        <p className="text-[#7A8B9A] text-xs">
-                          {formatDatetime(new Date(res.return_datetime))}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <StatusPill status={res.reservation_status} />
-                        <div className="flex flex-col gap-0.5 mt-1">
-                          {res.deposit_status !== "not_paid" && (
-                            <span className="text-xs text-[#7A8B9A]">
-                              Deposit: {res.deposit_status.replace(/_/g, " ")}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 hidden sm:table-cell">
-                        <p className="text-white text-xs font-semibold">
-                          {formatDollars(res.estimated_rental_subtotal)}
-                        </p>
-                        <p className="text-[#7A8B9A] text-xs">
-                          {res.estimated_total_days}d · {formatDollars(res.estimated_daily_rate)}/day
-                        </p>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex gap-3">
-                          <Link
-                            href={`/portal/${res.reservation_code}`}
-                            className="text-[#2952CC] hover:underline text-xs font-medium"
-                          >
-                            Portal
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* Table */}
+      {reservations.length === 0 ? (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl p-12 text-center">
+          <p className="text-gray-400 text-base font-medium">No reservations found</p>
+          <p className="text-gray-600 text-sm mt-1">
+            {status ? `No reservations with status: ${status.replace(/_/g, " ")}` : "No reservations have been created yet."}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-[#111827] border border-[#1f2937] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[#1f2937]">
+                  {["Code", "Customer", "Vehicle", "Pickup", "Status", "Amount", ""].map((h) => (
+                    <th key={h} className="text-left px-5 py-3.5 text-gray-500 text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1f2937]">
+                {reservations.map((r) => (
+                  <tr key={String(r.id)} className="hover:bg-[#1f2937]/50 transition-colors">
+                    <td className="px-5 py-4">
+                      <span className="font-mono text-[#2952CC] text-xs font-semibold">
+                        {String(r.reservation_code)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-white text-sm font-medium">
+                        {r.first_name ? `${String(r.first_name)} ${String(r.last_name)}` : "—"}
+                      </p>
+                      <p className="text-gray-500 text-xs">{String(r.email ?? "")}</p>
+                    </td>
+                    <td className="px-5 py-4 text-gray-300 text-sm">
+                      {r.year ? `${String(r.year)} ${String(r.make)} ${String(r.model)}` : "—"}
+                    </td>
+                    <td className="px-5 py-4 text-gray-400 text-xs whitespace-nowrap">
+                      {r.pickup_datetime
+                        ? new Date(String(r.pickup_datetime)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        : "—"}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded-lg text-xs font-semibold border ${STATUS_CHIP[String(r.reservation_status)] ?? "bg-gray-500/10 text-gray-400 border-gray-500/20"}`}>
+                        {String(r.reservation_status ?? "").replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-white font-semibold text-sm">
+                      {r.estimated_rental_subtotal ? `$${Number(r.estimated_rental_subtotal).toFixed(0)}` : "—"}
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link
+                        href={`/portal/${String(r.reservation_code)}`}
+                        className="text-xs text-[#2952CC] hover:text-blue-400 font-semibold whitespace-nowrap"
+                        target="_blank"
+                      >
+                        View →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ async function getMaintenanceRecords() {
   try {
     const sql = getDB();
     const rows = await sql`
-      SELECT m.*, v.year, v.make, v.model, v.slug
+      SELECT m.*, v.year AS vehicle_year, v.make AS vehicle_make, v.model AS vehicle_model, v.slug AS vehicle_slug, v.vehicle_code
       FROM maintenance_records m
       LEFT JOIN vehicles v ON v.id = m.vehicle_id
       ORDER BY
