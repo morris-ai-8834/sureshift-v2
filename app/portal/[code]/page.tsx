@@ -276,10 +276,12 @@ function CancelledPanel() {
 
 interface PageProps {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ email?: string }>;
 }
 
-export default async function PortalPage({ params }: PageProps) {
+export default async function PortalPage({ params, searchParams }: PageProps) {
   const { code } = await params;
+  const { email } = await searchParams;
   const data = await getPortalData(code);
 
   if (!data) notFound();
@@ -292,6 +294,18 @@ export default async function PortalPage({ params }: PageProps) {
       <Navbar />
 
       <div className="pt-28 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+
+        {/* Back to dashboard */}
+        {email && (
+          <div className="mb-4">
+            <Link
+              href={`/portal/dashboard?email=${encodeURIComponent(email)}`}
+              className="text-[#7A8B9A] text-sm hover:text-white transition-colors"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+        )}
 
         {/* Portal header */}
         <div className="mb-8">

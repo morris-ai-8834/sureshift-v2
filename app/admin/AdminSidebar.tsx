@@ -20,7 +20,9 @@ const NAV_ITEMS = [
   { href: "/admin/maintenance", label: "Maintenance", Icon: Icons.Wrench },
   { href: "/admin/expenses", label: "Expenses", Icon: Icons.CreditCard },
   { href: "/admin/mileage", label: "Mileage", Icon: Icons.Speedometer },
+  { href: "/admin/pnl", label: "P&L", Icon: Icons.Document },
   { href: "/admin/reports", label: "Reports", Icon: Icons.Document },
+  { href: "/admin/integrations", label: "Integrations", Icon: Icons.Settings },
   { href: "/admin/settings", label: "Settings", Icon: Icons.Settings },
 ];
 
